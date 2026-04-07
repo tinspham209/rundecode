@@ -1,0 +1,24 @@
+{
+	"editor.formatOnSave": true,
+	"editor.codeActionsOnSave": {
+		"source.fixAll": "explicit"
+		// "source.organizeImports": "explicit",
+		// "source.removeUnusedImports": "explicit"
+	},
+	"[typescriptreact]": {
+		"editor.codeActionsOnSave": {
+			"source.removeUnusedImports": "never",
+			"source.organizeImports": "never"
+		}
+	},
+	"cucumberautocomplete.steps": ["**/*.steps.ts"],
+	"cucumberautocomplete.syncfeatures": "**/*.feature",
+	"cucumberautocomplete.strictGherkinCompletion": true,
+	"cucumberautocomplete.strictGherkinValidation": true,
+	"cucumberautocomplete.smartSnippets": true,
+	"cucumberautocomplete.onTypeFormat": true,
+	"[feature]": {
+		"editor.defaultFormatter": "alexkrechik.cucumberautocomplete",
+		"editor.formatOnSave": true
+	}
+}

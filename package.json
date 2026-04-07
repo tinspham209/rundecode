@@ -1,0 +1,50 @@
+{
+	"name": "run-decode",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"start": "next start",
+		"lint": "next lint",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@openrouter/sdk": "^0.11.2",
+		"@hookform/resolvers": "^5.2.2",
+		"@radix-ui/react-slot": "^1.2.4",
+		"@tailwindcss/postcss": "^4.2.2",
+		"autoprefixer": "^10.4.27",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"dotenv": "^17.4.1",
+		"fit-file-parser": "^2.3.3",
+		"lucide-react": "^1.7.0",
+		"next": "14.2.25",
+		"next-themes": "^0.4.6",
+		"postcss": "^8.5.8",
+		"react": "18.3.1",
+		"react-dom": "18.3.1",
+		"react-dropzone": "^15.0.0",
+		"react-hook-form": "^7.72.1",
+		"tailwind-merge": "^3.5.0",
+		"tailwindcss": "^4.2.2",
+		"zod": "^4.3.6",
+		"zustand": "^5.0.12"
+	},
+	"devDependencies": {
+		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/react": "^16.3.2",
+		"@testing-library/user-event": "^14.6.1",
+		"@types/node": "^22.14.1",
+		"@types/react": "^18.3.18",
+		"@types/react-dom": "^18.3.5",
+		"jsdom": "^29.0.2",
+		"typescript": "^5.8.3",
+		"vitest": "^3.1.1"
+	},
+	"engines": {
+		"node": ">=20.0.0 <23.0.0"
+	},
+	"packageManager": "pnpm@10.32.1"
+}
