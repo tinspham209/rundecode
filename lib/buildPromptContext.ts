@@ -4,7 +4,8 @@ import type { ParsedFitData } from "./fitParser";
 const ADDITIONAL_GUARDRAILS = [
 	"Luôn giữ nội dung ở dạng plain text, không markdown.",
 	"Giữ báo cáo ngắn gọn nhưng đủ ý cho Strava.",
-	"Bắt buộc giữ attribution header: Analysis report by AI (model: [insert_correct_ai_model_name]) by rundecode.tinspham.dev.",
+	"Bắt buộc giữ attribution header: Analysis report by https://rundecode.tinspham.dev, AI model: [insert_correct_your_ai_model_name]",
+	"Không bao giờ tự ý thêm disclaimer về độ chính xác hoặc giới hạn của AI, trừ khi có yêu cầu cụ thể từ user.",
 ].join("\n");
 
 export function buildPromptContext(parsed: ParsedFitData): string {
