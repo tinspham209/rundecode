@@ -100,6 +100,7 @@ export function LoadingSpinner({
 				padding: "1rem 1.1rem",
 				display: "grid",
 				gap: "0.8rem",
+				marginBottom: "1rem",
 			}}
 		>
 			<div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
@@ -191,13 +192,6 @@ export function LoadingSpinner({
 					{tip}
 				</p>
 			</div>
-
-			<Zap
-				size={18}
-				color="#fb923c"
-				style={{ position: "absolute", right: 16, top: 16, opacity: 0.9 }}
-				className="animate-glow-pulse"
-			/>
 		</div>
 	);
 }
