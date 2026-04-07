@@ -106,14 +106,7 @@ export function MetadataSidebar({ metadata }: MetadataSidebarProps) {
 	];
 
 	return (
-		<aside
-			aria-label="Run metadata"
-			style={{
-				display: "grid",
-				gridTemplateColumns: "1fr 1fr",
-				gap: "0.5rem",
-			}}
-		>
+		<aside aria-label="Run metadata" className="metadata-grid">
 			{cards.map((card) => {
 				const Icon = card.icon;
 				return (

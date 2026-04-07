@@ -162,7 +162,6 @@ export default function HomePage() {
 		}
 
 		setLoading(true);
-		setError(null);
 
 		try {
 			const formData = new FormData();
@@ -246,10 +245,6 @@ export default function HomePage() {
 						</div>
 					</div>
 				</div>
-				<Badge>
-					<MoonStar size={11} />
-					Running Mood
-				</Badge>
 			</nav>
 
 			{/* ── Upload card ────────────────────── */}

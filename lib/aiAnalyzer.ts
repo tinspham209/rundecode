@@ -4,9 +4,14 @@ import { RUN_ANALYSIS_SYSTEM_PROMPT } from "../src/prompts/runAnalysisSystemProm
 // List of free models to try in order
 export const FREE_MODELS = [
 	"qwen/qwen3.6-plus:free",
-	"minimax/minimax-m2.5:free",
-	"qwen/qwen3-coder:free",
 	"openai/gpt-oss-120b:free",
+	"openai/gpt-oss-20b:free",
+	"minimax/minimax-m2.5:free",
+	"stepfun/step-3.5-flash:free",
+	"nvidia/nemotron-3-super-120b-a12b:free",
+	"arcee-ai/trinity-large-preview:free",
+	"z-ai/glm-4.5-air:free",
+	"qwen/qwen3-coder:free",
 	"google/gemma-3-27b-it:free",
 	"meta-llama/llama-3.3-70b-instruct:free",
 	"openrouter/free",

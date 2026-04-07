@@ -73,6 +73,19 @@ body {
 	}
 }
 
+/* ─── Metadata responsive grid ───────────────────────────── */
+.metadata-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+	.metadata-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
 /* ─── Keyframes ──────────────────────────────────────────── */
 @keyframes glow-pulse {
 	0%,
