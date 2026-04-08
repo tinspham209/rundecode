@@ -1,55 +1,49 @@
-"use client";
+import type { Metadata } from "next";
+import { ManualPageClient } from "../../components/ManualPageClient";
 
-import React from "react";
-import Link from "next/link";
-import { Activity } from "lucide-react";
-import { FitUploadPanel } from "../../components/FitUploadPanel";
+const pageTitle = "Manual FIT Upload and AI Run Analysis";
+const pageDescription =
+	"Upload FIT files, preview workout metadata, choose your AI model, and generate a Vietnamese running analysis ready for Strava.";
+
+export const metadata: Metadata = {
+	title: pageTitle,
+	description: pageDescription,
+	alternates: {
+		canonical: "/manual",
+	},
+	openGraph: {
+		title: pageTitle,
+		description: pageDescription,
+		url: "/manual",
+	},
+	twitter: {
+		title: pageTitle,
+		description: pageDescription,
+	},
+};
 
 export default function ManualPage() {
 	return (
-		<main style={{ maxWidth: 960, margin: "0 auto", padding: "2rem 1rem" }}>
-			<nav
-				style={{
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "space-between",
-					marginBottom: "2rem",
-				}}
+		<>
+			<section
+				style={{ maxWidth: 960, margin: "0 auto", padding: "1.25rem 1rem 0" }}
 			>
-				<div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-					<div
-						style={{
-							width: 40,
-							height: 40,
-							borderRadius: 12,
-							background: "linear-gradient(135deg,#f97316,#f59e0b)",
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
-							boxShadow: "0 4px 16px rgba(249,115,22,0.4)",
-						}}
-					>
-						<Activity size={20} color="#fff" />
-					</div>
-					<div>
-						<div
-							style={{
-								fontWeight: 800,
-								fontSize: "1.2rem",
-								color: "#fff",
-								letterSpacing: "-0.02em",
-							}}
-						>
-							RunDecode / Manual
-						</div>
-					</div>
-				</div>
-				<Link href="/" style={{ color: "#93c5fd", fontSize: "0.85rem" }}>
-					← Back to Strava flow
-				</Link>
-			</nav>
-
-			<FitUploadPanel />
-		</main>
+				<h1
+					style={{
+						fontSize: "1.6rem",
+						fontWeight: 800,
+						color: "#f8fafc",
+						marginBottom: "0.5rem",
+					}}
+				>
+					Manual FIT Upload for AI Running Analysis
+				</h1>
+				<p style={{ color: "#94a3b8", lineHeight: 1.6 }}>
+					Use this page to upload FIT files, verify parsed workout metadata, and
+					run AI analysis with your selected model.
+				</p>
+			</section>
+			<ManualPageClient />
+		</>
 	);
 }

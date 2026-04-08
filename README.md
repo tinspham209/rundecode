@@ -1,11 +1,11 @@
 # RunDecode
 
-RunDecode is a Next.js app for AI-assisted running analysis with two entry paths:
+RunDecode is a Next.js app for AI-Powered Running Analysis for Strava or FIT Workouts
 
-1. **Strava-first flow** on `/`
-2. **Manual `.fit` upload flow** on `/manual`
+RunDecode helps runners analyze Strava activities or FIT uploads with Vietnamese AI insights, clear performance context, and fast copy/sync workflow.
 
-The app is optimized for Zepp / Amazfit runners and produces editable Vietnamese analysis text suitable for pasting or syncing into a Strava activity description.
+Start with Strava for quick activity analysis, or switch to manual FIT upload when needed.
+
 
 ![Untitled](./public/opengraph-image.jpg)
 

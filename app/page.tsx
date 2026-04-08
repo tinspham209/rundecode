@@ -1,74 +1,56 @@
-"use client";
+import type { Metadata } from "next";
+import { HomePageClient } from "../components/HomePageClient";
 
-import React, { Suspense } from "react";
-import Link from "next/link";
-import { Activity } from "lucide-react";
-import { StravaPanel } from "../components/StravaPanel";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Button } from "../components/ui/button";
+const pageTitle = "AI Running Analysis for Strava or FIT";
+const pageDescription =
+	"Analyze Strava activities or FIT files with AI. Get Vietnamese run insights, route context, and one-tap sync to your Strava description.";
+
+export const metadata: Metadata = {
+	title: pageTitle,
+	description: pageDescription,
+	alternates: {
+		canonical: "/",
+	},
+	openGraph: {
+		title: pageTitle,
+		description: pageDescription,
+		url: "/",
+	},
+	twitter: {
+		title: pageTitle,
+		description: pageDescription,
+	},
+};
 
 export default function HomePage() {
 	return (
-		<main style={{ maxWidth: 960, margin: "0 auto", padding: "2rem 1rem" }}>
-			<nav
-				style={{
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "space-between",
-					marginBottom: "2rem",
-				}}
+		<>
+			<section
+				style={{ maxWidth: 960, margin: "0 auto", padding: "1.25rem 1rem 0" }}
 			>
-				<div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-					<div
-						style={{
-							width: 40,
-							height: 40,
-							borderRadius: 12,
-							background: "linear-gradient(135deg,#f97316,#f59e0b)",
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
-							boxShadow: "0 4px 16px rgba(249,115,22,0.4)",
-						}}
-					>
-						<Activity size={20} color="#fff" />
-					</div>
-					<div>
-						<div
-							style={{
-								fontWeight: 800,
-								fontSize: "1.2rem",
-								color: "#fff",
-								letterSpacing: "-0.02em",
-							}}
-						>
-							RunDecode
-						</div>
-						<div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: 1 }}>
-							Automatic Strava Analysis + Manual FIT Upload
-						</div>
-					</div>
-				</div>
-			</nav>
-
-			<Suspense fallback={null}>
-				<StravaPanel />
-			</Suspense>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Manual FIT flow</CardTitle>
-					<CardDescription>
-						Nếu bạn muốn phân tích thủ công bằng file .fit, dùng luồng tách riêng tại
-						 /manual.
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<Link href="/manual" style={{ textDecoration: "none" }}>
-						<Button type="button">Go to /manual</Button>
-					</Link>
-				</CardContent>
-			</Card>
-		</main>
+				<h1
+					style={{
+						fontSize: "1.75rem",
+						fontWeight: 800,
+						color: "#f8fafc",
+						marginBottom: "0.5rem",
+					}}
+				>
+					AI Running Analysis for Strava or FIT Workouts
+				</h1>
+				<p
+					style={{ color: "#94a3b8", lineHeight: 1.6, marginBottom: "0.75rem" }}
+				>
+					RunDecode helps runners analyze Strava activities or FIT uploads with
+					Vietnamese AI insights, clear performance context, and fast copy/sync
+					workflow.
+				</p>
+				<p style={{ color: "#94a3b8", lineHeight: 1.6 }}>
+					Start with Strava for quick activity analysis, or switch to manual FIT
+					upload when needed.
+				</p>
+			</section>
+			<HomePageClient />
+		</>
 	);
 }

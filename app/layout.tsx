@@ -5,22 +5,30 @@ import type { ReactNode } from "react";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "../components/theme-provider";
 import "./globals.css";
+import Footer from "@/components/Footer";
 
 const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"] });
 const siteUrl = "https://rundecode.tinspham.dev";
-const defaultTitle = "RunDecode";
+const defaultTitle = "RunDecode – AI Strava & FIT Running Analysis App";
 const defaultDescription =
-	"Explore RunDecode to analyze and improve your running performance. Connect your Strava account to get personalized insights and training recommendations based on your running data. Whether you are a beginner or an experienced runner, RunDecode helps you understand your performance and reach your running goals.";
+	"Analyze Strava activities and FIT files with AI. Get Vietnamese run insights, route context, and one-tap sync to your Strava description.";
 const openGraphImage = "/opengraph-image.jpg";
 
 export const metadata: Metadata = {
 	metadataBase: new URL(siteUrl),
 	title: {
 		default: defaultTitle,
-		template: `%s | ${defaultTitle}`,
+		template: "%s | RunDecode",
 	},
 	description: defaultDescription,
 	applicationName: defaultTitle,
+	keywords: [
+		"AI running analysis",
+		"Strava analysis",
+		"FIT file analysis",
+		"Vietnamese running insights",
+	],
+	category: "sports",
 	alternates: {
 		canonical: "/",
 	},
@@ -93,6 +101,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
 							},
 						}}
 					/>
+					<Footer />
 				</ThemeProvider>
 			</body>
 		</html>
