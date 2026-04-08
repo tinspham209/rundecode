@@ -10,19 +10,34 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import HomePage from "../app/page";
+import ManualPage from "../app/manual/page";
+
+const { toastSuccess, toastError } = vi.hoisted(() => ({
+	toastSuccess: vi.fn(),
+	toastError: vi.fn(),
+}));
+
+vi.mock("react-hot-toast", () => ({
+	default: {
+		success: toastSuccess,
+		error: toastError,
+	},
+	Toaster: () => null,
+}));
 
 afterEach(() => {
 	cleanup();
 });
 
-describe("HomePage upload flow", () => {
+describe("ManualPage upload flow", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
+		toastSuccess.mockReset();
+		toastError.mockReset();
 	});
 
 	it("shows validation error for non-.fit file", async () => {
-		render(<HomePage />);
+		render(<ManualPage />);
 
 		const input = screen.getByLabelText(/upload fit file/i);
 		const badFile = new File(["hello"], "run.tcx", { type: "text/plain" });
@@ -81,7 +96,7 @@ describe("HomePage upload flow", () => {
 
 		vi.stubGlobal("fetch", fetchMock);
 
-		render(<HomePage />);
+		render(<ManualPage />);
 
 		const input = screen.getByLabelText(/upload fit file/i);
 		const fitBytes = new Uint8Array([
@@ -110,5 +125,42 @@ describe("HomePage upload flow", () => {
 			"/api/analyze-fit",
 			expect.any(Object),
 		);
+	});
+
+	it("shows API error toast when parse-fit returns an error response", async () => {
+		const user = userEvent.setup();
+		const fetchMock = vi.fn((input: RequestInfo | URL) => {
+			const url = String(input);
+
+			if (url.includes("/api/parse-fit")) {
+				return Promise.resolve({
+					ok: false,
+					json: async () => ({ error: "FIT parse failed from API" }),
+				});
+			}
+
+			return Promise.resolve({
+				ok: true,
+				json: async () => ({}),
+			});
+		});
+
+		vi.stubGlobal("fetch", fetchMock);
+
+		render(<ManualPage />);
+
+		const input = screen.getByLabelText(/upload fit file/i);
+		const fitBytes = new Uint8Array([
+			0x0e, 0x10, 0x5d, 0x08, 0, 0, 0, 0, 0x2e, 0x46, 0x49, 0x54,
+		]);
+		const fitFile = new File([fitBytes], "run.fit", {
+			type: "application/octet-stream",
+		});
+
+		await user.upload(input, fitFile);
+
+		await waitFor(() => {
+			expect(toastError).toHaveBeenCalledWith("FIT parse failed from API");
+		});
 	});
 });

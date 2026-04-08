@@ -145,7 +145,7 @@ Nhiệt độ và độ ẩm cao tại Đà Nẵng có thể làm tăng nhịp t
 
 🍉 DINH DƯỠNG PHỤC HỒI
 Năng lượng tiêu hao: [XXX] kcal
-Khuyến nghị phục hồi (dựa trên cân nặng 75 kg):
+Khuyến nghị phục hồi (dựa trên cân nặng xx kg):
 Carbs: [xx-xx] g
 Protein: [xx-xx] g
 Gợi ý món ăn địa phương:
@@ -175,3 +175,98 @@ SELF-CHECK BEFORE OUTPUT
 - All sections from the output structure are present.
 - Environmental note about Đà Nẵng heat/humidity is included.
 - Advice is actionable and safe for next-run follow-up.`;
+
+type RunnerProfileInput = {
+	name?: string;
+	location?: string;
+	runningLevel?: string;
+	age?: number;
+	weightKg?: number;
+	maxHr?: number;
+	restingHr?: number;
+	vo2max?: number;
+	hrZones?: {
+		z1?: string;
+		z2?: string;
+		z3?: string;
+		z4?: string;
+		z5?: string;
+	};
+};
+
+const DEFAULT_PROFILE = {
+	name: "Tin",
+	location: "Đà Nẵng, Vietnam",
+	runningLevel: "Recreational runner improving aerobic base",
+	age: 27,
+	weightKg: 75,
+	maxHr: 182,
+	restingHr: 50,
+	vo2max: 49,
+};
+
+export function buildRunAnalysisSystemPrompt(
+	profile?: RunnerProfileInput | null,
+): string {
+	if (!profile) {
+		return RUN_ANALYSIS_SYSTEM_PROMPT;
+	}
+
+	const merged = {
+		...DEFAULT_PROFILE,
+		...profile,
+	};
+
+	const zones = profile.hrZones ?? calcZones(merged.maxHr);
+	const locationLine = `${merged.location} (hot and humid — interpret effort with +5 to +10 bpm environmental adjustment)`;
+
+	const dynamicRunnerProfile = [
+		"RUNNER PROFILE",
+		"",
+		`Name: ${merged.name}`,
+		`Location: ${locationLine}`,
+		"Community: @1ohana.runclub",
+		`Level: ${merged.runningLevel}`,
+		"Device: Zepp / Amazfit Balance",
+		`Age: ${merged.age}`,
+		`Weight: ${merged.weightKg} kg`,
+		`Max HR: ${merged.maxHr} bpm | Resting HR: ${merged.restingHr} bpm`,
+		`VO2Max: ${merged.vo2max}`,
+		"",
+		"HR Zones:",
+		`- Zone 1 Easy Recovery: ${zones.z1} bpm (64–74% HRmax)`,
+		`- Zone 2 Aerobic Base: ${zones.z2} bpm (74–82% HRmax)`,
+		`- Zone 3 Tempo: ${zones.z3} bpm (83–91% HRmax)`,
+		`- Zone 4 Threshold: ${zones.z4} bpm (91–96% HRmax)`,
+		`- Zone 5 VO2 Max: ${zones.z5} bpm (96–100% HRmax)`,
+	].join("\n");
+
+	return RUN_ANALYSIS_SYSTEM_PROMPT.replace(
+		/RUNNER PROFILE[\s\S]*?NUTRITION CALCULATION GUIDE/,
+		`${dynamicRunnerProfile}\n\nNUTRITION CALCULATION GUIDE`,
+	)
+		.replace(
+			"- Convert using weight 75 kg and round to whole grams.",
+			`- Convert using weight ${merged.weightKg} kg and round to whole grams.`,
+		)
+		.replace(
+			"Khuyến nghị phục hồi (dựa trên cân nặng 75 kg):",
+			`Khuyến nghị phục hồi (dựa trên cân nặng ${merged.weightKg} kg):`,
+		);
+}
+
+function calcZones(maxHr: number) {
+	const range = (minP: number, maxP: number) => {
+		const min = Math.round(maxHr * minP);
+		const max = Math.round(maxHr * maxP);
+		return `${min}–${max}`;
+	};
+
+	return {
+		z1: range(0.64, 0.74),
+		z2: range(0.74, 0.82),
+		z3: range(0.83, 0.91),
+		z4: range(0.91, 0.96),
+		z5: range(0.96, 1),
+	};
+}

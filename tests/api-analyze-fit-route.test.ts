@@ -160,6 +160,13 @@ describe("POST /api/analyze-fit", () => {
 		const response = await POST(request);
 		const body = await response.json();
 
+		expect(generateAnalysis).toHaveBeenCalledWith(
+			"context\n\nguardrails",
+			undefined,
+			"qwen/qwen3.6-plus:free",
+			"system",
+		);
+
 		expect(response.status).toBe(200);
 		expect(body.analysis).toBeTypeOf("string");
 		expect(body.metadata).toBeDefined();

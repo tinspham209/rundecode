@@ -3,6 +3,7 @@ import { generateAnalysis, FREE_MODELS } from "../../../lib/aiAnalyzer";
 import { buildPromptSegments } from "../../../lib/buildPromptContext";
 import { parseFitFile, ParseValidationError } from "../../../lib/fitParser";
 import { validateFitUpload } from "../../../lib/fitUploadValidation";
+import type { AthleteProfile } from "../../../lib/stravaTypes";
 
 type JsonError = { error: string };
 
@@ -61,6 +62,8 @@ export async function POST(request: Request) {
 		const formData = await request.formData();
 		const files = formData.getAll("file");
 		const modelParam = formData.get("model") as string | null;
+		const profileParam = formData.get("profile") as string | null;
+		const profile = safeParseProfile(profileParam);
 		const model =
 			modelParam && FREE_MODELS.includes(modelParam)
 				? modelParam
@@ -104,11 +107,15 @@ export async function POST(request: Request) {
 		}
 
 		const parsed = await parseFitFile(fileBuffer);
-		const [, structuredContext, guardrails] = buildPromptSegments(parsed);
+		const [systemPrompt, structuredContext, guardrails] = buildPromptSegments(
+			parsed,
+			profile,
+		);
 		const analysisResponse = await generateAnalysis(
 			`${structuredContext}\n\n${guardrails}`,
 			undefined,
 			model,
+			systemPrompt,
 		);
 
 		return NextResponse.json({
@@ -152,5 +159,21 @@ export async function POST(request: Request) {
 				: 500;
 
 		return NextResponse.json<JsonError>({ error: uiMessage }, { status });
+	}
+}
+
+function safeParseProfile(raw: string | null): AthleteProfile | null {
+	if (!raw) {
+		return null;
+	}
+
+	try {
+		const parsed = JSON.parse(raw) as AthleteProfile;
+		if (typeof parsed !== "object" || parsed === null) {
+			return null;
+		}
+		return parsed;
+	} catch {
+		return null;
 	}
 }

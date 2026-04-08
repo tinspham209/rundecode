@@ -3,7 +3,6 @@ import { RUN_ANALYSIS_SYSTEM_PROMPT } from "../src/prompts/runAnalysisSystemProm
 
 // List of free models to try in order
 export const FREE_MODELS = [
-	"qwen/qwen3.6-plus:free",
 	"openai/gpt-oss-120b:free",
 	"openai/gpt-oss-20b:free",
 	"minimax/minimax-m2.5:free",
@@ -15,6 +14,7 @@ export const FREE_MODELS = [
 	"google/gemma-3-27b-it:free",
 	"meta-llama/llama-3.3-70b-instruct:free",
 	"openrouter/free",
+	"qwen/qwen3.6-plus:free",
 ];
 
 const DEFAULT_MODEL = FREE_MODELS[0];
@@ -24,6 +24,18 @@ export type AnalysisResponse = {
 	tokensUsed?: number;
 	model: string;
 };
+
+type ChatMessageContent = {
+	message?: {
+		content?: string;
+	};
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+	return typeof value === "object" && value !== null
+		? (value as Record<string, unknown>)
+		: {};
+}
 
 function createClient(): OpenRouter {
 	const apiKey = process.env.OPENROUTER_API_KEY;
@@ -41,11 +53,12 @@ export async function generateAnalysis(
 	promptContext: string,
 	client?: OpenRouter,
 	model: string = DEFAULT_MODEL,
+	systemPrompt: string = RUN_ANALYSIS_SYSTEM_PROMPT,
 ): Promise<AnalysisResponse> {
 	const c = client ?? createClient();
 
 	const messages = [
-		{ role: "system" as const, content: RUN_ANALYSIS_SYSTEM_PROMPT },
+		{ role: "system" as const, content: systemPrompt },
 		{ role: "user" as const, content: promptContext },
 	];
 
@@ -84,12 +97,20 @@ export async function generateAnalysis(
 }
 
 function toAnalysisResponse(
-	response: any,
+	response: unknown,
 	model: string = DEFAULT_MODEL,
 ): AnalysisResponse {
-	const content =
-		(response as any)?.chatResult?.choices?.[0]?.message?.content ??
-		(response as any)?.choices?.[0]?.message?.content;
+	const responseRecord = asRecord(response);
+	const chatResult = asRecord(responseRecord.chatResult);
+	const choices = Array.isArray(chatResult.choices)
+		? (chatResult.choices as ChatMessageContent[])
+		: Array.isArray(responseRecord.choices)
+			? (responseRecord.choices as ChatMessageContent[])
+			: [];
+	const content = choices[0]?.message?.content;
+	const usage = asRecord(responseRecord.usage);
+	const totalTokens =
+		typeof usage.total_tokens === "number" ? usage.total_tokens : undefined;
 
 	if (!content) {
 		throw new Error("No content in OpenRouter response");
@@ -98,7 +119,7 @@ function toAnalysisResponse(
 	return {
 		analysis: content,
 		model,
-		tokensUsed: response.usage?.total_tokens,
+		tokensUsed: totalTokens,
 	};
 }
 

@@ -1,6 +1,5 @@
 import React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 const sizeStyles = {
@@ -42,16 +41,12 @@ const variantStyles = {
 	},
 } as const;
 
-const buttonVariants = cva("", {
-	variants: {
-		variant: { default: "", secondary: "", ghost: "", danger: "" },
-		size: { default: "", sm: "", lg: "" },
-	},
-	defaultVariants: { variant: "default", size: "default" },
-});
+type ButtonVariant = keyof typeof variantStyles;
+type ButtonSize = keyof typeof sizeStyles;
 
-export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
-	VariantProps<typeof buttonVariants> & {
+export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+		variant?: ButtonVariant;
+		size?: ButtonSize;
 		asChild?: boolean;
 	};
 
@@ -70,11 +65,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 		const Comp = asChild ? Slot : "button";
 		const vs = variantStyles[variant ?? "default"];
 		const ss = sizeStyles[size ?? "default"];
+		const background = props.disabled
+			? "rgba(255,255,255,0.03)"
+			: vs.background;
 		return (
 			<Comp
 				ref={ref}
 				className={cn(className)}
 				style={{
+					...vs,
+					...ss,
 					display: "inline-flex",
 					alignItems: "center",
 					justifyContent: "center",
@@ -83,13 +83,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 					fontWeight: 600,
 					cursor: props.disabled ? "not-allowed" : "pointer",
 					opacity: props.disabled ? 0.45 : 1,
-					backgroundColor: props.disabled
-						? "rgba(255,255,255,0.03)"
-						: vs.background,
+					background,
 					transition: "all 0.15s ease",
 					whiteSpace: "nowrap",
-					...vs,
-					...ss,
 					...style,
 				}}
 				{...props}

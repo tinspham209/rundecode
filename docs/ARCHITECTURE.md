@@ -2,17 +2,18 @@
 
 ## 1. System overview
 
-RunDecode is a stateless Next.js application that transforms Zepp/Amazfit `.fit` files into Vietnamese AI-generated run analysis.
+RunDecode is a stateless Next.js 14 application that supports two analysis entry points:
 
-Core UX pattern is **verify first, analyze second**:
+1. **Strava-first flow** on `/`
+2. **Manual FIT flow** on `/manual`
 
-1. Upload file
-2. Parse preview metadata
-3. User confirms data
-4. User picks model
-5. Analyze
+Both flows converge into the same AI generation strategy:
 
-This reduces wasted AI calls on invalid/corrupted files.
+1. build system prompt
+2. build structured context
+3. append additional guardrails
+4. call OpenRouter
+5. render editable plain-text analysis
 
 ---
 
@@ -20,146 +21,281 @@ This reduces wasted AI calls on invalid/corrupted files.
 
 ```text
 [Browser]
-  ├─ Upload .fit
-  ├─ POST /api/parse-fit
-  ├─ Show preview metadata
-  ├─ Select model from FREE_MODELS
-  └─ POST /api/analyze-fit (file + model)
-                |
-                v
-[Next.js API Routes]
-  ├─ validate file
-  ├─ parse FIT
-  ├─ build prompt segments
-  └─ call OpenRouter via aiAnalyzer
-                |
-                v
-[JSON Response]
-  analysis + metadata + model + tokensUsed + availableModels
+  ├─ StravaPanel on /
+  │   ├─ OAuth bootstrap
+  │   ├─ Fetch recent supported activities
+  │   ├─ Fetch streams for selected activity
+  │   ├─ Analyze selected activity
+  │   └─ Sync analysis back to Strava description
+  │
+  └─ FitUploadPanel on /manual
+      ├─ Upload .fit
+      ├─ Parse preview first
+      ├─ Verify metadata
+      └─ Analyze using selected model
+
+                ↓
+
+[Next.js Route Handlers]
+  ├─ /api/parse-fit
+  ├─ /api/analyze-fit
+  ├─ /api/analyze-strava
+  └─ /api/strava/* proxy routes
+
+                ↓
+
+[OpenRouter]
+  └─ chat.send(chatRequest)
 ```
 
 ---
 
 ## 3. Frontend architecture
 
-### Main page (`app/page.tsx`)
+### `app/page.tsx`
 
-Responsibilities:
-- manage upload state
-- trigger parse-preview endpoint automatically
-- enforce preview-before-analyze behavior
-- submit selected model with analysis request
+- Presents the Strava-first experience
+- Renders `StravaPanel`
+- Links to `/manual` for FIT upload fallback
 
-### Client state (`stores/analysisStore.ts`)
+### `app/manual/page.tsx`
 
-Store fields:
+- Dedicated manual FIT analysis page
+- Renders `FitUploadPanel`
+
+### Major UI components
+
+- `StravaPanel.tsx`
+  - OAuth bootstrap from search params
+  - fetch activities + stats
+  - per-activity analysis trigger
+  - description sync trigger
+  - profile form and toast feedback
+
+- `FitUploadPanel.tsx`
+  - `.fit` upload
+  - preview-before-analyze UX
+  - manual model selection
+
+- `ActivityCard.tsx`
+  - local wall-clock datetime formatting
+  - route map when polyline exists
+  - metrics grid
+  - current Strava description
+  - in-card AI analysis slot
+
+- `AnalysisDisplay.tsx`
+  - editable plain-text report
+  - copy action
+  - reset flow for manual FIT path
+
+---
+
+## 4. State architecture
+
+### `stores/analysisStore.ts`
+
+Global analysis UI state:
+
 - `analysis`
 - `metadata`
 - `loading`
 - `error`
 - `selectedModel`
 
-Store actions:
-- `setLoading`
-- `setResult`
-- `setError`
-- `setSelectedModel`
-- `reset`
+### `stores/authStore.ts`
+
+Strava auth/session state:
+
+- `athlete`
+- `accessToken`
+- `refreshToken`
+- `expiresAt`
+- `isAuthenticated`
+
+### `stores/profileStore.ts`
+
+Athlete profile and stats:
+
+- manual profile fields
+- HR zones
+- Strava athlete stats
+
+### `stores/stravaStore.ts`
+
+Strava activity workflow state:
+
+- filtered activities list
+- monthly / weekly context
+- selected activity
+- extracted activity data
+- per-activity analysis cache
+- per-activity sync status
 
 ---
 
-## 4. Backend architecture
+## 5. Backend architecture
 
-### Upload validation (`lib/fitUploadValidation.ts`)
+### FIT path
 
-Every upload path enforces:
-- extension `.fit`
+#### `lib/fitUploadValidation.ts`
+
+Validates:
+
+- `.fit` extension
 - MIME allowlist
-- FIT signature marker (`.FIT`) in header bytes
+- FIT signature bytes
 - size limit `<= 4MB`
 
-### Parsing (`lib/fitParser.ts`)
+#### `lib/fitParser.ts`
 
-Parses and normalizes:
-- session metrics (distance, time, pace, HR, cadence, calories, elevation)
-- lap summaries
-- derived signals (e.g., pause summary)
+Extracts and normalizes:
 
-Privacy boundaries:
-- no GPS coordinate payload in AI context
-- no device identifiers in AI context
+- session summary
+- laps
+- derived metrics
 
-### Prompt assembly (`lib/buildPromptContext.ts`)
+#### `app/api/parse-fit/route.ts`
 
-Prompt order is fixed:
-1. system prompt constant
-2. structured run context
+- validate upload
+- parse FIT
+- return preview metadata only
+
+#### `app/api/analyze-fit/route.ts`
+
+- validate upload
+- parse FIT
+- build prompt segments
+- call AI
+- return normalized analysis envelope
+
+### Strava path
+
+#### `lib/stravaAuth.ts`
+
+- OAuth URL building
+- session bootstrap parsing
+- token refresh threshold logic
+
+#### `app/api/strava/*`
+
+Proxy layer for:
+
+- auth bootstrap
+- token refresh
+- activities list
+- activity streams
+- athlete stats
+- activity description update
+
+#### `lib/stravaContextBuilder.ts`
+
+- builds monthly / weekly summaries
+- applies MVP activity allowlist
+- only includes supported activity types:
+  - Run
+  - Walk
+  - Hike / Hiking
+  - Trail / TrailRun
+
+#### `lib/stravaActivityExtractor.ts`
+
+- converts Strava activity + streams into normalized session/derived metrics
+
+#### `app/api/analyze-strava/route.ts`
+
+- accepts structured sanitized Strava payload
+- builds Strava prompt segments
+- reuses same AI gateway pattern as FIT flow
+
+---
+
+## 6. Prompt architecture
+
+Prompt assembly lives in `lib/buildPromptContext.ts` and must preserve this order:
+
+1. system prompt
+2. structured context
 3. additional guardrails
 
-### AI gateway (`lib/aiAnalyzer.ts`)
+There are two entry builders:
 
-Uses OpenRouter SDK:
-- source of truth model list: `FREE_MODELS`
-- default model: first item in array
-- method: `chat.send({ chatRequest: ... })`
-- retry once on rate-limit-like failures
+- `buildPromptSegments(parsedFit, profile?)`
+- `buildStravaPromptSegments({ ... })`
 
----
-
-## 5. API contracts
-
-### `POST /api/parse-fit`
-
-Input:
-- `multipart/form-data`
-- `file`
-
-Output:
-- `metadata` object for preview UI
-
-### `POST /api/analyze-fit`
-
-Input:
-- `multipart/form-data`
-- `file`
-- `model` (optional; validated against `FREE_MODELS`)
-
-Output:
-- `analysis` (plain text)
-- `metadata`
-- `model`
-- `tokensUsed`
-- `availableModels`
+Dynamic runner profile values are sourced from the athlete profile form and merged into the system prompt via `buildRunAnalysisSystemPrompt(...)`.
 
 ---
 
-## 6. Error model
+## 7. AI integration
 
-- `400`: invalid payload/type/signature
-- `413`: file too large
-- `422`: parse domain validation failure
-- `429`: provider rate-limited
-- `500`: provider/server fallback
+### `lib/aiAnalyzer.ts`
 
-`/api/analyze-fit` extracts provider raw messages and maps known rate-limit cases to 429.
+- provider: OpenRouter SDK
+- default model: first entry of `FREE_MODELS`
+- runtime-selected model supported
+- retry once on rate-limit style errors
+- returns normalized `{ analysis, tokensUsed, model }`
 
----
+Current analysis output requirement:
 
-## 7. Deployment model
-
-- stateless app (no DB required)
-- environment variable: `OPENROUTER_API_KEY`
-- suitable for Vercel Node runtime
+- plain text only
+- Vietnamese
+- attribution header preserved per prompt rules
 
 ---
 
-## 8. Testing boundaries
+## 8. Error model
 
-Primary coverage includes:
-- upload validation
-- fit parsing and normalization
-- prompt context generation
-- parse/analyze API route contracts
-- AI wrapper retry behavior
+### FIT routes
 
-Current suite validates the multi-model request path and analyze-route error mapping.
+- `400` invalid payload/file/signature
+- `413` file too large
+- `422` parse validation failure
+- `429` provider rate limit
+- `500` fallback error
+
+### Strava routes
+
+- `400` invalid query/payload
+- `401` missing/invalid bearer token
+- `403` insufficient permission from upstream
+- `404` activity not found upstream
+- `429` upstream or provider rate limit
+- `500` unexpected proxy error
+
+### Client-side UX
+
+- react-hot-toast for success/error toasts
+- `analysisStore.error` still stores the latest error message for component rendering paths
+
+---
+
+## 9. Privacy boundaries
+
+- no raw GPS traces to AI
+- no raw device identifiers to AI
+- Strava secrets remain server-only
+- app is stateless; no database required
+
+---
+
+## 10. Testing coverage
+
+The repository currently validates:
+
+- FIT validation and parsing
+- prompt assembly
+- OpenRouter wrapper behavior
+- Strava API proxy routes
+- Strava helper logic
+- ActivityCard behavior
+- Strava panel profile UX
+- manual FIT upload flow
+
+Canonical verification commands:
+
+```bash
+pnpm test
+pnpm build
+```

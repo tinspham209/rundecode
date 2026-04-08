@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Brain, Clock3, Cloud, Sparkles, Zap } from "lucide-react";
+import { Brain, Clock3, Cloud, Sparkles } from "lucide-react";
 
 export function LoadingSpinner({
 	message = "AI đang phân tích dữ liệu chạy...",

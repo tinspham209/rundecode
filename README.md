@@ -1,86 +1,107 @@
 # RunDecode
 
-RunDecode is app that converts `.fit` files into Vietnamese post-run analysis report by AI
+RunDecode is a Next.js app for AI-assisted running analysis with two entry paths:
 
-The product now uses a **verification-first flow**:
+1. **Strava-first flow** on `/`
+2. **Manual `.fit` upload flow** on `/manual`
 
-1. Upload `.fit`
-2. Auto-parse for preview metadata
-3. User checks preview metrics
-4. User selects AI model
-5. Click **Analyze Run**
-6. Receive editable plain-text analysis for Strava
+The app is optimized for Zepp / Amazfit runners and produces editable Vietnamese analysis text suitable for pasting or syncing into a Strava activity description.
+
+![Untitled](./public/opengraph-image.jpg)
 
 ---
 
-## Current capabilities
+## What the app does now
 
-- Strict `.fit`-only upload validation
-- Parse preview endpoint before AI call
-- Multi-model free-tier selection from UI
-- OpenRouter AI analysis with retry on rate-limit errors
-- Editable output + copy-to-clipboard UX
-- Mobile-first UI
+### Strava-first flow
+
+- Connect with Strava OAuth
+- Fetch recent supported activities only
+- MVP allowlist: `Run`, `Walk`, `Hike/Hiking`, `Trail/TrailRun`
+- Show activity cards with:
+  - route map (when polyline exists)
+  - metrics
+  - current Strava description
+  - per-activity AI analysis result
+- Sync generated analysis back into the Strava activity description
+
+### Manual FIT flow
+
+- Available on `/manual`
+- Accepts `.fit` files only
+- Parse-preview before analysis
+- User verifies metadata first
+- User chooses a model from the free model list
+- User runs analysis only after preview succeeds
 
 ---
 
-## Tech stack
+## Current tech stack
 
-- **Framework:** Next.js 14 (App Router) + TypeScript
-- **UI:** React 18 + Tailwind CSS
+- **Framework:** Next.js 14 App Router + TypeScript
+- **UI:** React 18 + Tailwind CSS + custom UI primitives
 - **Forms/Upload:** react-hook-form + react-dropzone
 - **State:** Zustand
+- **Maps:** react-leaflet + leaflet + @mapbox/polyline
+- **Toasts:** react-hot-toast
 - **FIT parsing:** fit-file-parser
-- **AI:** OpenRouter SDK (`@openrouter/sdk`)
+- **AI provider:** OpenRouter SDK
 - **Tests:** Vitest + Testing Library
 
 ---
 
-## AI models
+## AI setup
 
-Configured in `lib/aiAnalyzer.ts` via `FREE_MODELS`:
+Source of truth: `lib/aiAnalyzer.ts`
 
-- `qwen/qwen3.6-plus:free`
-- `minimax/minimax-m2.5:free`
-- `qwen/qwen3-coder:free`
-- `openai/gpt-oss-120b:free`
-- `google/gemma-3-27b-it:free`
-- `meta-llama/llama-3.3-70b-instruct:free`
-- `openrouter/free`
+- Provider: OpenRouter
+- Analysis method: `generateAnalysis(...)`
+- Prompt source: `src/prompts/runAnalysisSystemPrompt.ts`
+- Prompt assembly: `lib/buildPromptContext.ts`
 
-Default model = first item in the array.
+Current free-model list is defined in `FREE_MODELS` and the **default model is the first item in that array**.
 
 ---
 
-## Quick start
+## Environment variables
 
-1) Install dependencies
+Create `.env` or `.env.local`:
+
+```env
+OPENROUTER_API_KEY=your_openrouter_key
+STRAVA_CLIENT_ID=your_strava_client_id
+STRAVA_CLIENT_SECRET=your_strava_client_secret
+STRAVA_REDIRECT_URI=http://localhost:3000/api/strava/callback
+```
+
+Notes:
+
+- `OPENROUTER_API_KEY` is required for both FIT and Strava analysis
+- Strava secrets must remain server-side only
+
+---
+
+## Local development
+
+Install dependencies:
 
 ```bash
 pnpm install
 ```
 
-2) Configure environment
-
-Create `.env` or `.env.local`:
-
-```env
-OPENROUTER_API_KEY=your_api_key_here
-```
-
-3) Start app
+Run dev server:
 
 ```bash
 pnpm dev
 ```
 
-4) Run tests
+Run tests:
 
 ```bash
 pnpm test
 ```
 
-5) Build production
+Build production:
 
 ```bash
 pnpm build
@@ -89,47 +110,35 @@ pnpm start
 
 ---
 
-## API endpoints
+## Route overview
 
-### `POST /api/parse-fit`
+### App routes
 
-Purpose: validate + parse FIT file and return preview metadata.
+- `/` → Strava-first experience
+- `/manual` → manual FIT upload experience
 
-Request:
-- `multipart/form-data`
-- `file` field only
+### API routes
 
-### `POST /api/analyze-fit`
-
-Purpose: validate + parse + build prompt + run AI analysis.
-
-Request:
-- `multipart/form-data`
-- `file` field (required)
-- `model` field (optional, must be one of `FREE_MODELS`)
-
-Response keys:
-- `analysis`
-- `metadata`
-- `model`
-- `tokensUsed`
-- `availableModels`
-
-Status codes:
-- `400` invalid input/file/type/signature
-- `413` file too large
-- `422` parse validation failure
-- `429` provider rate-limited
-- `500` provider/server error
+- `POST /api/parse-fit`
+- `POST /api/analyze-fit`
+- `POST /api/analyze-strava`
+- `GET /api/strava/auth-url`
+- `GET /api/strava/callback`
+- `POST /api/strava/refresh`
+- `GET /api/strava/activities`
+- `GET /api/strava/streams`
+- `GET /api/strava/athlete-stats`
+- `POST /api/strava/activity-description`
 
 ---
 
-## Security and privacy
+## Privacy and MVP rules
 
-- API key is server-side only (`OPENROUTER_API_KEY`)
-- No client-side secret exposure
-- Strict upload checks (extension, MIME, FIT signature, size limit)
-- GPS coordinates and device identifiers are excluded from AI prompt payloads
+- `.fit` uploads must pass extension + MIME + FIT signature validation
+- Upload limit remains `<= 4MB`
+- Do not send GPS traces to AI
+- Do not send raw device identifiers to AI
+- Only analyze supported MVP activity types from Strava
 
 ---
 
@@ -138,34 +147,50 @@ Status codes:
 ```text
 app/
   api/
-    parse-fit/route.ts
-    analyze-fit/route.ts
+    analyze-fit/
+    analyze-strava/
+    parse-fit/
+    strava/
+  manual/
+    page.tsx
   page.tsx
 
 components/
+  ActivityCard.tsx
+  ActivityList.tsx
+  ActivityRouteMap.tsx
   AnalysisDisplay.tsx
-  MetadataSidebar.tsx
-  LoadingSpinner.tsx
+  AthleteProfileForm.tsx
   ErrorAlert.tsx
+  FitUploadPanel.tsx
+  LoadingSpinner.tsx
+  MetadataSidebar.tsx
+  StravaPanel.tsx
 
 lib/
-  fitUploadValidation.ts
-  fitParser.ts
-  buildPromptContext.ts
   aiAnalyzer.ts
+  buildPromptContext.ts
+  fitParser.ts
+  fitUploadValidation.ts
+  stravaActivityExtractor.ts
+  stravaAuth.ts
+  stravaContextBuilder.ts
+  stravaTypes.ts
 
 stores/
   analysisStore.ts
-
-docs/
-  ARCHITECTURE.md
-  DEVELOPER.md
+  authStore.ts
+  profileStore.ts
+  stravaStore.ts
 ```
 
 ---
 
-## Related docs
+## Documentation set
 
-- `docs/ARCHITECTURE.md`
-- `docs/DEVELOPER.md`
+Only these four docs are maintained:
+
+- `README.md`
 - `docs/PROPOSAL.md`
+- `docs/DEVELOPER.md`
+- `docs/ARCHITECTURE.md`

@@ -5,21 +5,30 @@
 - Node.js `>=20 <23`
 - pnpm
 - OpenRouter API key
+- Strava app credentials (for Strava-first flow)
 
-Environment:
+Required environment variables:
 
 ```env
-OPENROUTER_API_KEY=your_api_key_here
+OPENROUTER_API_KEY=your_openrouter_key
+STRAVA_CLIENT_ID=your_strava_client_id
+STRAVA_CLIENT_SECRET=your_strava_client_secret
+STRAVA_REDIRECT_URI=http://localhost:3000/api/strava/callback
 ```
 
 ---
 
 ## 2. Local development
 
-Install and run:
+Install dependencies:
 
 ```bash
 pnpm install
+```
+
+Run locally:
+
+```bash
 pnpm dev
 ```
 
@@ -29,7 +38,7 @@ Run tests:
 pnpm test
 ```
 
-Build:
+Build production bundle:
 
 ```bash
 pnpm build
@@ -37,120 +46,162 @@ pnpm build
 
 ---
 
-## 3. Product flow (do not break)
+## 3. Product flows you must preserve
 
-Required UX sequence:
+### A. Strava-first flow (`/`)
 
-1. Upload `.fit`
-2. Auto `POST /api/parse-fit`
-3. Show preview metadata
-4. User selects model
+1. User authenticates with Strava
+2. App fetches recent supported activities only
+3. User selects an activity card
+4. App fetches streams and analyzes that activity
+5. Analysis appears in-card
+6. User may sync the generated analysis to Strava description
+
+### B. Manual FIT flow (`/manual`)
+
+1. User uploads `.fit`
+2. App calls `POST /api/parse-fit`
+3. UI shows metadata preview
+4. User chooses model
 5. User clicks **Analyze Run**
-6. `POST /api/analyze-fit` with `file` + `model`
+6. App calls `POST /api/analyze-fit`
 
-Do not call analyze endpoint before preview is completed.
+Do not remove preview-before-analyze from the FIT path.
 
 ---
 
-## 4. Multi-model rules
+## 4. Activity scope rules (MVP)
 
-Source of truth: `lib/aiAnalyzer.ts` → `FREE_MODELS`.
+Strava activity allowlist must stay limited to:
 
-When adding/removing models:
+- `Run`
+- `Walk`
+- `Hike` / `Hiking`
+- `Trail` / `TrailRun`
+
+Do not show/analyze unsupported types like:
+
+- Ride
+- Swim
+- Workout
+- gym/cross-training activities
+
+The filtering logic currently lives in `lib/stravaContextBuilder.ts` and is reused by `app/api/strava/activities/route.ts`.
+
+---
+
+## 5. Prompt and output rules
+
+### Source of truth
+
+- system prompt: `src/prompts/runAnalysisSystemPrompt.ts`
+- prompt assembly: `lib/buildPromptContext.ts`
+
+### Order contract
+
+Always keep:
+
+1. system prompt
+2. structured context
+3. additional guardrails
+
+### Output contract
+
+- plain text only
+- Vietnamese
+- attribution preserved
+- suitable for Strava description
+
+---
+
+## 6. AI model rules
+
+Model list lives in `lib/aiAnalyzer.ts` → `FREE_MODELS`.
+
+When changing models:
+
 - update `FREE_MODELS`
-- keep first element as default model
-- ensure UI dropdown displays updated list
-- ensure route validation still checks membership with `FREE_MODELS.includes(modelParam)`
-- update tests if response contract changes
+- remember the first entry becomes default
+- keep UI dropdown aligned
+- keep request validation aligned
+- update tests if response contract or expectations change
 
 ---
 
-## 5. Validation rules (must keep)
+## 7. Validation rules you must keep
 
-In `lib/fitUploadValidation.ts`:
+### FIT upload validation
+
+Apply to both parse and analyze FIT routes:
+
 - extension `.fit`
 - MIME allowlist
 - FIT signature marker
-- max size `<= 4MB`
+- size `<= 4MB`
 
-Apply these checks consistently to both parse and analyze endpoints.
+### Strava sync rules
 
----
-
-## 6. Parser and prompt rules
-
-### Parser (`lib/fitParser.ts`)
-
-- session message is summary truth
-- lap messages drive split/lap analysis
-- records are fallback-derived signals
-- throw `ParseValidationError` on domain-invalid data
-
-### Prompt builder (`lib/buildPromptContext.ts`)
-
-Keep order stable:
-1) system prompt
-2) structured data context
-3) additional guardrails
-
-Generated analysis must remain plain text.
+- description sync must remain server-side via proxy route
+- never expose `STRAVA_CLIENT_SECRET` client-side
 
 ---
 
-## 7. AI integration rules
+## 8. Toast and error UX
 
-In `lib/aiAnalyzer.ts`:
-- provider: OpenRouter SDK
-- method: `chat.send` with `chatRequest`
-- selected model comes from request or default
-- retry once for rate-limit patterns
-- return normalized shape `{ analysis, model, tokensUsed }`
+Current toast system: `react-hot-toast`
 
-Never expose API key to client.
+Rules:
 
----
-
-## 8. API contract and statuses
-
-### `/api/parse-fit`
-- returns preview `metadata`
-
-### `/api/analyze-fit`
-- accepts optional `model`
-- returns `analysis`, `metadata`, `model`, `tokensUsed`, `availableModels`
-
-Status code mapping:
-- `400` bad request/invalid file
-- `413` file too large
-- `422` parse validation
-- `429` provider rate limit
-- `500` fallback server/provider error
+- use `toast.success(...)` for success confirmations
+- use `toast.error(...)` when API returns a known error response
+- preserve the actual backend error message whenever possible
+- keep `analysisStore.error` aligned where existing UI still depends on it
 
 ---
 
-## 9. Testing expectations
+## 9. High-value edit map
 
-Before merging changes:
+- AI gateway: `lib/aiAnalyzer.ts`
+- Prompt builder: `lib/buildPromptContext.ts`
+- System prompt: `src/prompts/runAnalysisSystemPrompt.ts`
+- FIT parse/validate: `lib/fitParser.ts`, `lib/fitUploadValidation.ts`
+- Strava auth: `lib/stravaAuth.ts`
+- Strava context/filtering: `lib/stravaContextBuilder.ts`
+- Strava extraction: `lib/stravaActivityExtractor.ts`
+- Strava UI orchestration: `components/StravaPanel.tsx`
+- Manual FIT UI: `components/FitUploadPanel.tsx`
+- Activity card UX: `components/ActivityCard.tsx`
 
-- `pnpm test` must pass
-- `pnpm build` must pass
-- if contracts changed, update route tests
+---
 
-Important test files:
-- `tests/api-parse-fit-route.test.ts`
+## 10. Testing expectations
+
+Before merging any meaningful change:
+
+```bash
+pnpm test
+pnpm build
+```
+
+Important test files include:
+
 - `tests/api-analyze-fit-route.test.ts`
-- `tests/ai-analyzer.test.ts`
+- `tests/api-analyze-strava-route.test.ts`
+- `tests/api-strava-routes.test.ts`
 - `tests/prompt-context.test.ts`
+- `tests/strava-helpers.test.ts`
+- `tests/page-upload.test.tsx`
+- `tests/activity-card.test.tsx`
 
 ---
 
-## 10. Common edit map
+## 11. Documentation policy
 
-- Upload gatekeeping: `lib/fitUploadValidation.ts`
-- Parser logic: `lib/fitParser.ts`
-- Prompt assembly: `lib/buildPromptContext.ts`
-- AI call + model list: `lib/aiAnalyzer.ts`
-- Analyze API: `app/api/analyze-fit/route.ts`
-- Parse API: `app/api/parse-fit/route.ts`
-- UI flow + dropdown: `app/page.tsx`
-- Shared state: `stores/analysisStore.ts`
+Only these four docs are maintained:
+
+- `README.md`
+- `docs/PROPOSAL.md`
+- `docs/DEVELOPER.md`
+- `docs/ARCHITECTURE.md`
+
+If a product/process change is significant, update these docs instead of creating new proposal variants.

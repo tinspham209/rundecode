@@ -1,13 +1,11 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React from "react";
 import Link from "next/link";
 import { Activity } from "lucide-react";
-import { StravaPanel } from "../components/StravaPanel";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Button } from "../components/ui/button";
+import { FitUploadPanel } from "../../components/FitUploadPanel";
 
-export default function HomePage() {
+export default function ManualPage() {
 	return (
 		<main style={{ maxWidth: 960, margin: "0 auto", padding: "2rem 1rem" }}>
 			<nav
@@ -42,33 +40,16 @@ export default function HomePage() {
 								letterSpacing: "-0.02em",
 							}}
 						>
-							RunDecode
-						</div>
-						<div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: 1 }}>
-							Automatic Strava Analysis + Manual FIT Upload
+							RunDecode / Manual
 						</div>
 					</div>
 				</div>
+				<Link href="/" style={{ color: "#93c5fd", fontSize: "0.85rem" }}>
+					← Back to Strava flow
+				</Link>
 			</nav>
 
-			<Suspense fallback={null}>
-				<StravaPanel />
-			</Suspense>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Manual FIT flow</CardTitle>
-					<CardDescription>
-						Nếu bạn muốn phân tích thủ công bằng file .fit, dùng luồng tách riêng tại
-						 /manual.
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<Link href="/manual" style={{ textDecoration: "none" }}>
-						<Button type="button">Go to /manual</Button>
-					</Link>
-				</CardContent>
-			</Card>
+			<FitUploadPanel />
 		</main>
 	);
 }
