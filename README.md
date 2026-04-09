@@ -188,9 +188,11 @@ stores/
 
 ## Documentation set
 
-Only these four docs are maintained:
+Primary docs are:
 
 - `README.md`
 - `docs/PROPOSAL.md`
 - `docs/DEVELOPER.md`
 - `docs/ARCHITECTURE.md`
+- `docs/DESIGN.md`
+- `docs/EFFECTIVE_PROMPTING_STITCH.md`

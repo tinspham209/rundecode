@@ -5,16 +5,15 @@ import { RUN_ANALYSIS_SYSTEM_PROMPT } from "../src/prompts/runAnalysisSystemProm
 export const FREE_MODELS = [
 	"openai/gpt-oss-120b:free",
 	"openai/gpt-oss-20b:free",
-	"minimax/minimax-m2.5:free",
-	"stepfun/step-3.5-flash:free",
-	"nvidia/nemotron-3-super-120b-a12b:free",
-	"arcee-ai/trinity-large-preview:free",
-	"z-ai/glm-4.5-air:free",
-	"qwen/qwen3-coder:free",
-	"google/gemma-3-27b-it:free",
+	"google/gemma-4-31b-it:free",
 	"meta-llama/llama-3.3-70b-instruct:free",
+	"google/gemma-4-26b-a4b-it:free",
+	"google/gemma-3-27b-it:free",
 	"openrouter/free",
-	"qwen/qwen3.6-plus:free",
+	"qwen/qwen3-next-80b-a3b-instruct:free",
+	"z-ai/glm-4.5-air:free",
+	"minimax/minimax-m2.5:free",
+	"qwen/qwen3-coder:free",
 ];
 
 const DEFAULT_MODEL = FREE_MODELS[0];

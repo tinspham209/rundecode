@@ -21,10 +21,17 @@ export type StravaActivity = {
 	moving_time: number;
 	elapsed_time: number;
 	total_elevation_gain: number;
+	average_speed?: number;
+	max_speed?: number;
+	average_watts?: number;
+	max_watts?: number;
 	average_heartrate?: number;
 	max_heartrate?: number;
 	average_cadence?: number;
 	calories?: number;
+	kilojoules?: number;
+	elev_high?: number;
+	elev_low?: number;
 	gear_id?: string;
 	device_name?: string;
 	map?: StravaMap;

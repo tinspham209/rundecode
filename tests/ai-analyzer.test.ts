@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { generateAnalysis } from "../lib/aiAnalyzer";
+import { FREE_MODELS, generateAnalysis } from "../lib/aiAnalyzer";
 
 describe("aiAnalyzer", () => {
 	beforeEach(() => {
@@ -7,7 +7,7 @@ describe("aiAnalyzer", () => {
 		process.env.OPENROUTER_API_KEY = "test-key-123";
 	});
 
-	it("uses qwen/qwen3.6-plus:free and returns analysis with metadata", async () => {
+	it("uses the default free model and returns analysis with metadata", async () => {
 		const mockChatSend = vi.fn().mockResolvedValue({
 			choices: [
 				{
@@ -31,12 +31,12 @@ describe("aiAnalyzer", () => {
 		expect(mockChatSend).toHaveBeenCalledWith(
 			expect.objectContaining({
 				chatRequest: expect.objectContaining({
-					model: "qwen/qwen3.6-plus:free",
+					model: FREE_MODELS[0],
 				}),
 			}),
 		);
 
-		expect(result.model).toBe("qwen/qwen3.6-plus:free");
+		expect(result.model).toBe(FREE_MODELS[0]);
 		expect(result.tokensUsed).toBe(999);
 		expect(result.analysis).toContain("Báo cáo phân tích chạy");
 	});

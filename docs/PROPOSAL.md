@@ -193,9 +193,11 @@ These are potential next steps, not current required scope:
 
 This file is now the single proposal source of truth.
 
-Do not create a second proposal document for Strava or FIT flow changes. Update this file instead so the documentation set remains limited to:
+Do not create a second proposal document for Strava or FIT flow changes. Update this file instead so the documentation set stays centralized in:
 
 - `README.md`
 - `docs/PROPOSAL.md`
 - `docs/DEVELOPER.md`
 - `docs/ARCHITECTURE.md`
+- `docs/DESIGN.md`
+- `docs/EFFECTIVE_PROMPTING_STITCH.md`

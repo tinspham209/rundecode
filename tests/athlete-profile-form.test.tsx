@@ -48,9 +48,48 @@ describe("AthleteProfileForm", () => {
 		);
 
 		await user.type(screen.getByLabelText("Max HR"), "190");
-		await user.click(screen.getByRole("button", { name: /auto-calculate from max hr/i }));
+		await user.click(
+			screen.getByRole("button", { name: /auto-calculate from max hr/i }),
+		);
 
 		expect(screen.getByLabelText("Z1")).toHaveValue("122-141");
 		expect(screen.getByLabelText("Z5")).toHaveValue("182-190");
+	});
+
+	it("should show validation error when name is empty", async () => {
+		const user = userEvent.setup();
+		const onSubmit = vi.fn();
+
+		render(
+			<AthleteProfileForm
+				onSubmit={onSubmit}
+				defaultValue={{ name: "", runningLevel: "intermediate" }}
+			/>,
+		);
+
+		await user.click(screen.getByRole("button", { name: /save profile/i }));
+
+		expect(onSubmit).not.toHaveBeenCalled();
+		expect(await screen.findByText(/name is required/i)).toBeInTheDocument();
+	});
+
+	it("should call onSubmit when form is valid", async () => {
+		const user = userEvent.setup();
+		const onSubmit = vi.fn();
+
+		render(<AthleteProfileForm onSubmit={onSubmit} />);
+
+		const nameInput = screen.getByLabelText(/name \*/i);
+		await user.clear(nameInput);
+		await user.type(nameInput, "John Doe");
+
+		await user.click(screen.getByRole("button", { name: /save profile/i }));
+
+		expect(onSubmit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				name: "John Doe",
+				runningLevel: "intermediate",
+			}),
+		);
 	});
 });

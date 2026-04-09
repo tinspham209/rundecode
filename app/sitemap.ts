@@ -11,6 +11,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
 			priority: 1,
 		},
 		{
+			url: `${siteUrl}/activities`,
+			lastModified: new Date(),
+			changeFrequency: "hourly",
+			priority: 0.9,
+		},
+		{
+			url: `${siteUrl}/profile`,
+			lastModified: new Date(),
+			changeFrequency: "weekly",
+			priority: 0.7,
+		},
+		{
 			url: `${siteUrl}/manual`,
 			lastModified: new Date(),
 			changeFrequency: "weekly",

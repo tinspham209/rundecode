@@ -1,263 +1,153 @@
-Feature: RunDecode end-to-end run analysis from .fit to Vietnamese AI report
+Feature: RunDecode latest landing, Strava activities flow, and manual FIT analysis
   As a runner
-  I want to upload a valid Zepp/Amazfit .fit file and receive editable Vietnamese analysis
-  So that I can quickly post high-quality insights to Strava
+  I want clear entry points for Strava and manual FIT analysis
+  So that I can move from landing page to activities dashboard to detailed AI analysis
 
   Background:
     Given the RunDecode web app is running
-    And I open the main upload page
 
-  @happy @upload
-  Scenario: Upload a valid .fit file and get a successful analysis response
-    Given I have a valid file named "Zepp20260406192022.fit" smaller than 4MB
-    When I upload the file from the main form
-    Then I should see a loading state indicating analysis is in progress
-    And the API should respond with status 200
-    And I should see an editable analysis text area
-    And I should see metadata cards for core run metrics
+  @landing @desktop @mobile
+  Scenario: Root landing page shows only two primary entry cards
+    When I open the root page "/"
+    Then I should see the RunDecode brand hero
+    And I should see a card titled "Strava Activities Dashboard"
+    And I should see a card titled "Manual FIT flow"
+    And I should not see the athlete profile onboarding form on the landing page
+    And I should not see the activities dashboard list on the landing page
 
-  @happy @api
-  Scenario: Successful API response returns required JSON contract fields
-    Given I upload a valid ".fit" file with parseable session data
-    When the analysis request is processed
-    Then the response body should include "analysis"
-    And the response body should include "metadata"
-    And "analysis" should be plain text
-    And "metadata" should include distance pace time avg_hr max_hr cadence_spm calories elevation_gain_m
+  @landing @navigation
+  Scenario: Landing page cards navigate to the correct routes
+    Given I am on the root page "/"
+    When I click "Open Activities Dashboard"
+    Then I should navigate to "/activities"
+    When I go back to the root page
+    And I click "Manual Fit flow"
+    Then I should navigate to "/manual"
 
-  @happy @analysis
-  Scenario: Analysis includes required AI attribution header
-    Given I upload a valid ".fit" file
-    When analysis is completed
-    Then the analysis output should start with "Báo cáo phân tích chạy (Analysis by AI)"
+  @activities @auth
+  Scenario: Activities route shows Strava authorization card when user is not authenticated
+    Given I am not authenticated with Strava
+    When I open "/activities"
+    Then I should see the heading "Activities Dashboard"
+    And I should see a CTA labeled "Login to Strava"
+    And I should not see the activity list yet
 
-  @happy @editing
-  Scenario: User can edit the generated analysis before copying
-    Given I have received a successful analysis
-    When I modify the text inside the analysis area
-    Then my edited content should remain visible
-    And the original generated text should not be forcibly restored
+  @activities @callback
+  Scenario: Successful Strava OAuth callback redirects into the activities route
+    Given I start Strava OAuth from the app
+    When Strava authorization succeeds
+    Then the callback should redirect to "/activities"
+    And the session tokens should be available to the activities flow
 
-  @happy @clipboard
-  Scenario: Copy button copies edited text content
-    Given I have edited the analysis text
-    When I tap "Copy to Clipboard"
-    Then the clipboard should contain the edited analysis text
-    And I should see a "Copied!" feedback message
+  @activities @onboarding
+  Scenario: First authenticated visit requires athlete profile onboarding before activities are shown
+    Given I am authenticated with Strava
+    And my athlete profile is not complete
+    When I open "/activities"
+    Then I should see the onboarding title "Athlete Profile: Basic Information"
+    And I should see the save action "Lưu profile"
+    And I should not see the activities list yet
 
-  @happy @reset
-  Scenario: Analyze another run resets current state
-    Given I have a completed analysis on screen
-    When I tap "Analyze Another Run"
-    Then the file input should be reset
-    And the previous analysis text should be cleared
-    And the upload form should be ready for a new file
+  @activities @validation
+  Scenario: Name is required during athlete profile onboarding
+    Given I am authenticated with Strava
+    And my athlete profile is not complete
+    When I submit the onboarding form without a name
+    Then I should see the validation message "Name is required"
+    And the profile should not be saved
 
-  @validation @extension
-  Scenario: Reject file with non-fit extension
-    Given I have a file named "activity.tcx"
-    When I upload the file from the main form
-    Then the API should respond with status 400
-    And I should see an error about invalid file type
-    And no AI analysis should be triggered
+  @activities @fetch
+  Scenario: Completed profile unlocks auto-loading recent activities
+    Given I am authenticated with Strava
+    And my athlete profile has been saved successfully
+    When I stay on "/activities"
+    Then the app should automatically fetch recent activities
+    And I should see a button labeled "Refresh Activities"
+    And I should see a button labeled "View Profile"
+    And I should see a connected state badge for Strava
 
-  @validation @extension
-  Scenario: Reject uppercase wrong extension despite valid binary data
-    Given I have a file named "activity.FITX" containing FIT-like bytes
-    When I upload the file
-    Then the request should be rejected with status 400
-    And the error should mention accepted extension is ".fit"
+  @activities @list
+  Scenario: Auto-loaded recent activities render activity cards with detail CTA
+    Given I am authenticated with Strava
+    And my athlete profile has been saved successfully
+    And Strava returns recent running activities
+    When the activities dashboard finishes loading
+    Then I should see activity cards in the activities dashboard
+    And each activity card should show distance pace and date
+    And each activity card should show a button labeled "See details & Analyze"
+    And I should not see a model selector on the activities list route
 
-  @validation @mime
-  Scenario: Reject file with disallowed MIME type
-    Given I have a file named "run.fit" with MIME type "text/plain"
-    When I upload the file
-    Then the API should respond with status 400
-    And I should see an error about MIME type not allowed
+  @profile @stats
+  Scenario: Dedicated profile route shows editable athlete profile and readonly Strava stats
+    Given I am authenticated with Strava
+    When I open "/profile"
+    Then I should see the heading "Athlete Profile"
+    And I should see readonly "Strava athlete stats"
+    And I should see the profile form for editing athlete information
 
-  @validation @signature
-  Scenario: Reject file that has .fit extension but invalid FIT signature marker
-    Given I have a file named "run.fit" without the FIT signature marker in header
-    When I upload the file
-    Then the API should respond with status 400
-    And I should see an error about invalid FIT signature
+  @activities @detail-navigation
+  Scenario: Selecting an activity card opens the activity detail route
+    Given I am viewing the activities dashboard with recent activities loaded
+    When I click "See details & Analyze" on an activity card
+    Then I should navigate to "/activities/{activity_id}"
+    And I should see the activity name as the main heading
+    And I should see a visible "Back to activities" control
 
-  @validation @filesize
-  Scenario: Reject file larger than 4MB
-    Given I have a valid ".fit" file larger than 4MB
-    When I upload the file
-    Then the API should respond with status 413
-    And I should see an error indicating file is too large
-    And no parsing should be performed
+  @activity-detail @analysis
+  Scenario: Activity detail route shows richer Strava fields and analysis controls
+    Given I am on "/activities/{activity_id}"
+    And the selected activity exists in the current session or fetched fallback list
+    And the app fetches Strava activity detail from the dedicated activity endpoint
+    Then I should see sport type local time and description when available
+    And I should see additional metrics such as avg speed max speed watts and elevation bounds
+    Then I should see a model selector under "Select AI Model"
+    And I should see a button labeled "Generate Report"
+    And I should see a disabled or empty sync area before analysis is generated
 
-  @validation @boundary
-  Scenario: Accept file exactly at 4MB boundary
-    Given I have a valid ".fit" file with size exactly 4MB
-    When I upload the file
-    Then the API should continue to parsing
-    And the request should not fail with 413
+  @activity-detail @mobile
+  Scenario: Mobile activity detail keeps AI analysis above the fold
+    Given I am on "/activities/{activity_id}" on a mobile viewport
+    When the page is rendered
+    Then the AI Analysis panel should appear before the route map and extra metrics
+    And lower-priority activity visualizations should remain scrollable below
 
-  @validation @missing
-  Scenario: Reject request with missing file field
-    Given I submit analyze-fit request without attaching any file
-    When the server validates the request
-    Then the API should respond with status 400
-    And I should see an error indicating file is required
+  @activity-detail @success
+  Scenario: Generating analysis on the detail route produces editable AI output
+    Given I am on "/activities/{activity_id}"
+    And the activity has valid Strava stream data
+    When I click "Generate Report"
+    Then the app should call the Strava analyze API
+    And I should see analysis content in the activity analysis textarea
+    And the analysis should remain editable for follow-up actions
 
-  @validation @multifile
-  Scenario: Reject request with multiple files when single upload is expected
-    Given I attach two valid ".fit" files in one request
-    When I submit the analysis request
-    Then the API should respond with status 400
-    And the error should indicate only one file is supported
+  @activity-detail @sync
+  Scenario: Syncing generated analysis updates the Strava activity description
+    Given I am on "/activities/{activity_id}"
+    And an AI analysis has already been generated
+    When I click "Sync to Strava"
+    Then the app should call the Strava activity description endpoint
+    And I should see a success hint if the sync completes
 
-  @parsing @session
-  Scenario: Parse session metrics from valid FIT payload
-    Given I upload a valid .fit file with session fields present
-    When the parser decodes the FIT messages
-    Then the parsed output should include session total distance in km
-    And the parsed output should include total timer time in HH:MM:SS
-    And the parsed output should include avg and max heart rate
-    And the parsed output should include total calories
-    And the parsed output should include cadence in spm
-    And the parsed output should include average pace in min per km
+  @manual @upload
+  Scenario: Manual FIT route still supports upload preview and AI analysis
+    Given I open the route "/manual"
+    When I upload a valid ".fit" file
+    Then I should see parsed preview metadata
+    And I should be able to click "Analyze Run"
+    And successful analysis should show an editable analysis textarea
 
-  @parsing @lap
-  Scenario: Parse lap messages for lap-by-lap analysis
-    Given I upload a valid .fit file containing lap messages
-    When parsing is completed
-    Then each lap should include lap number distance time avg_hr avg_pace and cadence
-    And laps should be ordered by lap number
+  @manual @validation
+  Scenario: Manual FIT route still rejects invalid file extensions
+    Given I open the route "/manual"
+    When I upload a file named "run.tcx"
+    Then I should see an error indicating only ".fit" files are accepted
 
-  @parsing @fallback
-  Scenario: Continue with session-only analysis when lap data is absent
-    Given I upload a valid .fit file that has session data but no laps
-    When parsing and analysis are executed
-    Then the request should still succeed with status 200
-    And the analysis should use available session-level context
-
-  @parsing @record-derived
-  Scenario: Use record stream only for derived metrics and fallbacks
-    Given I upload a valid .fit file with session and record messages
-    When metrics are prepared for AI
-    Then session summary should be used as primary source
-    And record data should be used only for derived indicators like drift and stability
-
-  @parsing @invalid-data
-  Scenario: Reject parsed run when total distance is zero
-    Given I upload a .fit file whose parsed session total distance is zero
-    When parser validation runs
-    Then the API should respond with status 422
-    And I should see a parse validation error
-
-  @parsing @invalid-data
-  Scenario: Reject parsed run when average heart rate is outside valid range
-    Given I upload a .fit file whose parsed average heart rate is below 40 or above 200
-    When parser validation runs
-    Then the API should respond with status 422
-    And I should see a parse validation error for heart rate
-
-  @privacy @gps
-  Scenario: GPS coordinates are stripped before AI request
-    Given I upload a valid .fit file containing record-level latitude and longitude
-    When the AI payload is assembled
-    Then latitude fields should not be present in the AI payload
-    And longitude fields should not be present in the AI payload
-
-  @privacy @device
-  Scenario: Device identifiers are stripped before AI request
-    Given I upload a valid .fit file containing device serial identifiers
-    When the AI payload is assembled
-    Then device identifier fields should not be present in the AI payload
-
-  @privacy @logging
-  Scenario: Raw GPS traces are not logged by the backend
-    Given I upload a valid .fit file containing GPS traces
-    When the server processes the request
-    Then server logs should not include raw latitude or longitude values
-
-  @prompt @order
-  Scenario: Prompt assembly follows strict ordering rules
-    Given parsed fit data is available
-    When the Gemini request is constructed
-    Then the first part should be the system prompt constant
-    And the second part should be structured parsed data context
-    And the third part should be additional guardrails instructions
-
-  @prompt @source-of-truth
-  Scenario: Prompt uses in-code constant instead of runtime markdown file loading
-    Given the analysis request is prepared on the backend
-    When prompt source is resolved
-    Then the system instruction should come from a TypeScript constant
-    And no runtime filesystem read of markdown prompt files should occur
-
-  @ai @model
-  Scenario: Gemini request targets the configured default model
-    Given a valid analysis request is ready for AI
-    When the backend calls the AI provider
-    Then the requested model should be "gemini-1.5-flash"
-
-  @ai @language
-  Scenario: Generated analysis is in Vietnamese plain text
-    Given a valid .fit analysis is generated
-    When I inspect the analysis content
-    Then the output should be Vietnamese text
-    And the output should not contain markdown headings or markdown list syntax
-
-  @ai @metadata
-  Scenario: Response includes model metadata and token usage metadata when available
-    Given a successful AI completion
-    When the API returns the response payload
-    Then the payload should include model metadata
-    And token usage metadata should be present when provider returns it
-
-  @ai @retry
-  Scenario: Retry once on transient AI rate-limit failure
-    Given the first AI call fails due to a transient rate limit
-    When the backend retry policy is applied
-    Then the system should retry exactly once
-    And if the retry succeeds the API should return status 200
-
-  @ai @failure
-  Scenario: Return graceful error when AI request fails after retry
-    Given AI request fails and retry also fails
-    When backend maps the failure
-    Then the API should respond with status 500
-    And the response should contain a safe retry-friendly message
-
-  @api @error-mapping
-  Scenario Outline: API returns correct status code for failure categories
-    Given a request failure of type "<failureType>"
-    When the backend handles the failure
-    Then the API should return status <statusCode>
-
-    Examples:
-      | failureType              | statusCode |
-      | invalid extension        | 400        |
-      | invalid mime             | 400        |
-      | invalid signature        | 400        |
-      | file too large           | 413        |
-      | parse validation failure | 422        |
-      | model provider failure   | 500        |
-
-  @ui @loading
-  Scenario: Loading state is shown during backend processing
-    Given I submit a valid .fit file
-    When the analysis request is in progress
-    Then upload controls should be disabled
-    And a loading spinner should be visible
-    And a status message should indicate processing
-
-  @ui @errors
-  Scenario: Error alert appears with retry action when processing fails
-    Given a file analysis request fails
-    When the page receives an error response
-    Then an error alert should be displayed
-    And a retry action should be available
-
-  @ui @metadata-display
-  Scenario: Metadata sidebar displays core metrics after success
-    Given analysis request completes successfully
+  @manual @reset
+  Scenario: Manual FIT analysis can still be reset for another run
+    Given I have completed a manual FIT analysis
+    When I click "Analyze Another Run"
+    Then the previous analysis should be cleared
+    And the manual upload form should be ready for a new file
     When metadata is rendered
     Then I should see distance pace time avg hr max hr cadence calories and elevation
 
