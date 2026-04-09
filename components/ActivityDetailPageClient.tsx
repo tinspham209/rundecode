@@ -29,19 +29,8 @@ const DynamicRouteMap = dynamic(
 	{
 		ssr: false,
 		loading: () => (
-			<div
-				style={{
-					height: 360,
-					borderRadius: 16,
-					background: "rgba(255,255,255,0.04)",
-					border: "1px solid rgba(255,255,255,0.08)",
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					color: "#94a3b8",
-				}}
-			>
-				Đang tải bản đồ...
+			<div className="h-[360px] rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400">
+				Loading map...
 			</div>
 		),
 	},
@@ -137,7 +126,7 @@ export function ActivityDetailPageClient({
 				});
 				const payload = await response.json();
 				if (!response.ok) {
-					showError(payload.error ?? "Không thể tải lại danh sách hoạt động.");
+					showError(payload.error ?? "Failed to reload activity list.");
 					return;
 				}
 
@@ -145,7 +134,7 @@ export function ActivityDetailPageClient({
 				setActivities((payload.activities ?? []) as StravaActivity[]);
 			} catch {
 				if (!cancelled) {
-					showError("Lỗi mạng khi tải hoạt động Strava.");
+					showError("Network error while loading Strava activities.");
 				}
 			} finally {
 				if (!cancelled) {
@@ -185,7 +174,7 @@ export function ActivityDetailPageClient({
 				});
 				const payload = await response.json();
 				if (!response.ok) {
-					showError(payload.error ?? "Không thể tải activity detail.");
+					showError(payload.error ?? "Failed to load activity detail.");
 					return;
 				}
 
@@ -202,7 +191,7 @@ export function ActivityDetailPageClient({
 				}
 			} catch {
 				if (!cancelled) {
-					showError("Lỗi mạng khi tải activity detail.");
+					showError("Network error while loading activity detail.");
 				}
 			} finally {
 				if (!cancelled) {
@@ -240,7 +229,7 @@ export function ActivityDetailPageClient({
 		try {
 			const token = await ensureToken();
 			if (!token) {
-				showError("Bạn chưa đăng nhập Strava.");
+				showError("You are not logged in to Strava.");
 				return;
 			}
 
@@ -284,10 +273,10 @@ export function ActivityDetailPageClient({
 				analyzePayload.analysis,
 				analyzePayload.metadata,
 			);
-			toast.success("AI analysis đã sẵn sàng.");
+			toast.success("AI analysis is ready.");
 		} catch (err) {
 			if (err instanceof Error && err.name === "AbortError") return;
-			showError("Lỗi mạng khi phân tích hoạt động Strava.");
+			showError("Network error while analyzing Strava activity.");
 		} finally {
 			if (!controller.signal.aborted) {
 				setLoading(false);
@@ -309,7 +298,7 @@ export function ActivityDetailPageClient({
 
 	const onSyncDescription = useCallback(async () => {
 		if (!activity || !analysisEntry?.analysis) {
-			showError("Vui lòng phân tích hoạt động trước khi sync lên Strava.");
+			showError("Please analyze the activity before syncing to Strava.");
 			return;
 		}
 
@@ -325,7 +314,7 @@ export function ActivityDetailPageClient({
 		try {
 			const token = await ensureToken();
 			if (!token) {
-				showError("Bạn chưa đăng nhập Strava.");
+				showError("You are not logged in to Strava.");
 				setSyncStatus(activity.id, "error");
 				return;
 			}
@@ -344,17 +333,17 @@ export function ActivityDetailPageClient({
 			});
 			const payload = await response.json();
 			if (!response.ok) {
-				showError(payload.error ?? "Không thể sync mô tả lên Strava.");
+				showError(payload.error ?? "Failed to sync description to Strava.");
 				setSyncStatus(activity.id, "error");
 				return;
 			}
 
 			updateActivityDescription(activity.id, analysisEntry.analysis);
 			setSyncStatus(activity.id, "success");
-			toast.success("Đã sync mô tả lên Strava.");
+			toast.success("Description synced to Strava.");
 		} catch (err) {
 			if (err instanceof Error && err.name === "AbortError") return;
-			showError("Lỗi mạng khi sync mô tả lên Strava.");
+			showError("Network error while syncing to Strava.");
 			setSyncStatus(activity.id, "error");
 		} finally {
 			if (!controller.signal.aborted) {
@@ -373,12 +362,12 @@ export function ActivityDetailPageClient({
 
 	if (!isAuthenticated) {
 		return (
-			<main
-				style={{ maxWidth: 960, margin: "0 auto", padding: "2.5rem 1.5rem" }}
-			>
-				<p style={{ color: "#94a3b8" }}>
-					Bạn cần đăng nhập Strava trước.{" "}
-					<Link href="/activities">Quay lại activities</Link>
+			<main className="max-w-[960px] mx-auto px-6 py-10">
+				<p className="text-slate-400">
+					You need to log in to Strava first.{" "}
+					<Link href="/activities" className="text-orange-500 hover:underline">
+						Back to activities
+					</Link>
 				</p>
 			</main>
 		);
@@ -386,154 +375,85 @@ export function ActivityDetailPageClient({
 
 	if (!Number.isFinite(id)) {
 		return (
-			<main
-				style={{ maxWidth: 960, margin: "0 auto", padding: "2.5rem 1.5rem" }}
-			>
-				<p style={{ color: "#fda4af" }}>Activity id không hợp lệ.</p>
+			<main className="max-w-[960px] mx-auto px-6 py-10">
+				<p className="text-rose-300">Invalid activity ID.</p>
 			</main>
 		);
 	}
 
 	if (!activity) {
 		return (
-			<main
-				style={{ maxWidth: 960, margin: "0 auto", padding: "2.5rem 1.5rem" }}
-			>
+			<main className="max-w-[960px] mx-auto px-6 py-10">
 				<Link
 					href="/activities"
-					style={{ color: "#f8fafc", textDecoration: "none" }}
+					className="text-slate-200 no-underline flex items-center gap-2 hover:text-white transition-colors"
 				>
-					<ArrowLeft
-						size={16}
-						style={{ verticalAlign: "middle", marginRight: 8 }}
-					/>
+					<ArrowLeft size={16} />
 					Back to activities
 				</Link>
-				<p style={{ marginTop: "1rem", color: "#94a3b8" }}>
+				<p className="mt-4 text-slate-400">
 					{fetchingFallback || fetchingDetail
-						? "Đang tải hoạt động..."
-						: "Không tìm thấy hoạt động này trong danh sách gần đây."}
+						? "Loading activity..."
+						: "Activity not found in recent list."}
 				</p>
 			</main>
 		);
 	}
 
 	return (
-		<main
-			style={{
-				maxWidth: 1320,
-				margin: "0 auto",
-				padding: "2rem 1.5rem 2.5rem",
-			}}
-		>
-			<div style={{ marginBottom: "1.5rem" }}>
+		<main className="max-w-[1320px] mx-auto px-6 py-8 pb-10">
+			<div className="mb-6">
 				<Link
 					href="/activities"
-					style={{
-						display: "inline-flex",
-						alignItems: "center",
-						gap: "0.5rem",
-						color: "#e2e8f0",
-						textDecoration: "none",
-						fontWeight: 600,
-					}}
+					className="inline-flex items-center gap-2 text-slate-200 no-underline font-semibold hover:text-white transition-colors"
 				>
 					<ArrowLeft size={16} />
 					Back to activities
 				</Link>
 			</div>
 
-			<header
-				style={{
-					display: "grid",
-					gap: "0.85rem",
-					marginBottom: "1.5rem",
-				}}
-			>
-				<div
-					style={{
-						display: "inline-flex",
-						alignItems: "center",
-						gap: "0.5rem",
-						padding: "0.45rem 0.8rem",
-						borderRadius: 999,
-						background: "rgba(249,115,22,0.16)",
-						border: "1px solid rgba(249,115,22,0.24)",
-						color: "#fdba74",
-						fontSize: "0.82rem",
-						fontWeight: 700,
-						width: "fit-content",
-					}}
-				>
-					{formatSportType(activity)}
-				</div>
+			<header className="grid gap-3 mb-6">
 				<div>
-					<h1
-						style={{
-							margin: 0,
-							fontWeight: 800,
-							fontSize: "clamp(2rem, 4vw, 3rem)",
-							color: "#fff",
-							letterSpacing: "-0.03em",
-						}}
-					>
-						{activity.name}
-					</h1>
-					<p
-						style={{ margin: "0.55rem 0 0", color: "#94a3b8", lineHeight: 1.7 }}
-					>
+					<div className="flex flex-row gap-2 flex-wrap items-center">
+						<div className="inline-flex justify-center items-center gap-2 p-1 rounded-md bg-orange-500/15 border border-orange-500/25 text-orange-300 text-xs font-bold w-fit h-fit">
+							{formatSportType(activity)}
+						</div>
+						<h1 className="m-0 font-extrabold text-[clamp(2rem,4vw,3rem)] text-white tracking-tight leading-none">
+							{activity.name}
+						</h1>
+					</div>
+					<p className="mt-2 text-slate-400 leading-relaxed">
 						{formatDateTimeGmt7(activity)} · Activity detail synced from Strava.
 					</p>
 					{activity.description ? (
-						<p
-							style={{
-								margin: "0.75rem 0 0",
-								color: "#cbd5e1",
-								lineHeight: 1.7,
-							}}
-						>
+						<p className="mt-3 text-slate-300 leading-relaxed">
 							{activity.description}
 						</p>
 					) : null}
 				</div>
 			</header>
 
-			<section
-				className="activity-detail-grid"
-				style={{ display: "grid", gap: "1.5rem", alignItems: "start" }}
-			>
-				<div
-					className="activity-visual-stack"
-					style={{ display: "grid", gap: "1rem" }}
-				>
-					<Card style={{ padding: "1rem", borderRadius: 18 }}>
+			<section className="grid gap-6 items-start lg:grid-cols-[1fr_560px]">
+				{/* Side Column: Activity Context */}
+				<div className="flex flex-col gap-6 order-2 lg:order-1">
+					<Card className="p-4 rounded-[22px] border-white/10 bg-slate-900/40 overflow-hidden shadow-lg">
+						<div className="flex items-center justify-between mb-3 px-1">
+							<h3 className="text-white text-sm font-bold uppercase tracking-wider text-slate-400">
+								Route Map
+							</h3>
+						</div>
 						{routeCoordinates.length >= 2 ? (
-							<div style={{ borderRadius: 16, overflow: "hidden" }}>
+							<div className="rounded-xl overflow-hidden border border-white/5">
 								<DynamicRouteMap coordinates={routeCoordinates} />
 							</div>
 						) : (
-							<div
-								style={{
-									height: 360,
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "center",
-									color: "#94a3b8",
-								}}
-							>
-								Indoor run / không có polyline route
+							<div className="h-[240px] flex items-center justify-center text-slate-500 text-sm italic border border-dashed border-white/10 rounded-xl">
+								No GPS data available
 							</div>
 						)}
 					</Card>
 
-					<div
-						className="activity-metrics-grid"
-						style={{
-							display: "grid",
-							gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-							gap: "1rem",
-						}}
-					>
+					<div className="grid grid-cols-2 gap-3">
 						<DetailMetric
 							label="Distance"
 							value={`${(activity.distance / 1000).toFixed(2)} km`}
@@ -543,308 +463,163 @@ export function ActivityDetailPageClient({
 							value={toPace(activity.distance / 1000, activity.moving_time)}
 						/>
 						<DetailMetric
-							label="Elevation Gain"
+							label="Elevation"
 							value={`${Math.round(activity.total_elevation_gain)} m`}
 						/>
 						<DetailMetric
 							label="Avg HR"
 							value={formatHeartRate(activity.average_heartrate)}
 						/>
-						<DetailMetric
-							label="Avg Cadence"
-							value={formatCadence(activity.average_cadence)}
-						/>
-						<DetailMetric label="Calories" value={formatCalories(activity)} />
 					</div>
 
-					<Card style={{ padding: "1.25rem", borderRadius: 18 }}>
-						<h2
-							style={{
-								margin: 0,
-								color: "#fff",
-								fontSize: "1.15rem",
-								fontWeight: 700,
-							}}
-						>
-							Additional activity data
-						</h2>
-						<div
-							className="activity-extra-grid"
-							style={{
-								display: "grid",
-								gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-								gap: "0.85rem 1rem",
-								marginTop: "1rem",
-							}}
-						>
+					<Card className="p-5 rounded-[22px] border-white/10 bg-slate-900/40 shadow-lg">
+						<h3 className="m-0 text-white text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">
+							Performance Details
+						</h3>
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 							<DetailMetaRow
 								label="Sport type"
-								value={formatSportType(activity)}
+								value={activity.sport_type || "N/A"}
 							/>
 							<DetailMetaRow
-								label="Local time (GMT+7)"
-								value={formatDateTimeGmt7(activity)}
+								label="Date time"
+								value={formatDateTimeGmt7(activity) || "N/A"}
 							/>
 							<DetailMetaRow
-								label="Avg speed"
-								value={formatSpeedAsPace(activity.average_speed)}
+								label="Avg Cadence"
+								value={formatCadence(activity.average_cadence)}
 							/>
 							<DetailMetaRow
-								label="Max speed"
-								value={formatSpeedAsPace(activity.max_speed)}
-							/>
-							<DetailMetaRow
-								label="Avg watts"
-								value={formatWatts(activity.average_watts)}
-							/>
-							<DetailMetaRow
-								label="Max watts"
-								value={formatWatts(activity.max_watts)}
+								label="Calories"
+								value={formatCalories(activity)}
 							/>
 							<DetailMetaRow
 								label="Max HR"
 								value={formatHeartRate(activity.max_heartrate)}
 							/>
 							<DetailMetaRow
-								label="Elevation high"
-								value={formatMeters(activity.elev_high)}
+								label="Avg Speed"
+								value={formatSpeedAsPace(activity.average_speed)}
 							/>
 							<DetailMetaRow
-								label="Elevation low"
-								value={formatMeters(activity.elev_low)}
+								label="Avg watts"
+								value={`${activity.average_watts?.toFixed(2) || "N/A"} W`}
 							/>
+
 							<DetailMetaRow
-								label="Elapsed time"
+								label="Elapsed"
 								value={formatDuration(activity.elapsed_time)}
 							/>
 						</div>
 					</Card>
 				</div>
+				{/* Main Column: AI Analysis */}
+				<div className="flex flex-col gap-4 order-1 lg:order-2">
+					<Card className="p-5 sm:p-6 rounded-[22px] border-white/10 bg-slate-900/20 backdrop-blur-sm shadow-xl">
+						<div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+							<h2 className="text-white text-2xl sm:text-3xl font-extrabold tracking-tight">
+								AI Analysis
+							</h2>
 
-				<Card
-					className="analysis-panel"
-					style={{ padding: "1.25rem", borderRadius: 18 }}
-				>
-					<h2
-						style={{
-							margin: "0 0 1rem",
-							color: "#fff",
-							fontSize: "1.7rem",
-							fontWeight: 700,
-						}}
-					>
-						AI Analysis
-					</h2>
-
-					<label
-						htmlFor="ai-model-select"
-						style={{
-							display: "block",
-							marginBottom: "0.5rem",
-							color: "#cbd5e1",
-							fontSize: "0.9rem",
-						}}
-					>
-						Select AI Model
-					</label>
-					<select
-						id="ai-model-select"
-						value={selectedModel}
-						onChange={(event) => setSelectedModel(event.target.value)}
-						style={{
-							width: "100%",
-							padding: "0.8rem 1rem",
-							borderRadius: 12,
-							border: "1px solid rgba(255,255,255,0.12)",
-							background: "rgba(15,23,42,0.72)",
-							color: "#e2e8f0",
-							fontSize: "0.95rem",
-							marginBottom: "1rem",
-						}}
-					>
-						{FREE_MODELS.map((model) => (
-							<option key={model} value={model}>
-								{model}
-							</option>
-						))}
-					</select>
-
-					<Button
-						type="button"
-						onClick={onAnalyze}
-						disabled={loading}
-						style={{
-							width: "100%",
-							padding: "0.95rem 1.2rem",
-							fontWeight: 700,
-							background: "linear-gradient(135deg,#f97316,#f59e0b)",
-							border: "none",
-							borderRadius: 12,
-							marginBottom: "1.25rem",
-						}}
-					>
-						{loading ? "Generating..." : "Generate Report"}
-					</Button>
-
-					{loading ? (
-						<LoadingSpinner message="AI đang phân tích dữ liệu chạy..." />
-					) : (
-						<div
-							style={{
-								borderRadius: 16,
-								border: "1px solid rgba(255,255,255,0.08)",
-								background: "rgba(2,6,23,0.45)",
-								padding: "1rem",
-							}}
-						>
-							<textarea
-								aria-label="Activity analysis"
-								readOnly
-								value={
-									analysisEntry?.analysis ??
-									"Generate a report to see your AI analysis here."
-								}
-								style={{
-									width: "100%",
-									minHeight: 320,
-									border: "none",
-									outline: "none",
-									resize: "vertical",
-									background: "transparent",
-									color: "#e2e8f0",
-									fontSize: "0.95rem",
-									lineHeight: 1.7,
-									fontFamily: "inherit",
-								}}
-							/>
+							<div className="flex items-center gap-3">
+								<label
+									htmlFor="ai-model-select"
+									className="hidden sm:block text-slate-400 text-sm font-medium"
+								>
+									Model:
+								</label>
+								<select
+									id="ai-model-select"
+									value={selectedModel}
+									onChange={(event) => setSelectedModel(event.target.value)}
+									className="px-3 py-2 rounded-xl border border-white/15 bg-slate-900/70 text-slate-200 text-xs sm:text-sm focus:ring-1 focus:ring-orange-500/50 outline-none transition-all"
+								>
+									{FREE_MODELS.map((model) => (
+										<option key={model} value={model}>
+											{model.split("/").pop()}
+										</option>
+									))}
+								</select>
+							</div>
 						</div>
-					)}
 
-					<Button
-						type="button"
-						onClick={onSyncDescription}
-						disabled={
-							!analysisEntry?.analysis || syncingActivityId === activity.id
-						}
-						style={{
-							width: "100%",
-							padding: "0.95rem 1.2rem",
-							fontWeight: 700,
-							background: "linear-gradient(135deg,#f97316,#f43f5e)",
-							border: "none",
-							borderRadius: 12,
-							marginTop: "1rem",
-						}}
-					>
-						{syncingActivityId === activity.id
-							? "Đang sync..."
-							: "Sync to Strava"}
-					</Button>
+						<Button
+							type="button"
+							onClick={onAnalyze}
+							disabled={loading}
+							className="w-full py-4 mb-6 font-bold text-lg bg-gradient-to-br from-orange-500 to-amber-500 border-none rounded-2xl shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 active:scale-[0.99] transition-all"
+						>
+							{loading ? "Generating analysis..." : "Generate AI Report"}
+						</Button>
 
-					{syncStatusById[activity.id] === "success" ? (
-						<p
-							style={{
-								margin: "0.75rem 0 0",
-								color: "#6ee7b7",
-								fontSize: "0.82rem",
-							}}
-						>
-							Đã sync mô tả thành công.
-						</p>
-					) : null}
-					{syncStatusById[activity.id] === "error" ? (
-						<p
-							style={{
-								margin: "0.75rem 0 0",
-								color: "#fda4af",
-								fontSize: "0.82rem",
-							}}
-						>
-							Sync thất bại, vui lòng thử lại.
-						</p>
-					) : null}
-				</Card>
+						<div className="relative min-h-[400px] lg:min-h-[500px]">
+							{loading ? (
+								<div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-2xl backdrop-blur-[2px] z-10">
+									<LoadingSpinner message="AI is decoding your performance..." />
+								</div>
+							) : null}
+
+							<div className="rounded-2xl border border-white/10 bg-black/40 p-5 shadow-inner">
+								<textarea
+									aria-label="Activity analysis"
+									readOnly
+									value={
+										analysisEntry?.analysis ??
+										"Select a model and click 'Generate AI Report' to start your analysis."
+									}
+									className="w-full min-h-[300px] bg-transparent border-none outline-none resize-y text-slate-200 text-base sm:text-lg leading-relaxed font-sans scrollbar-thin scrollbar-thumb-white/10"
+								/>
+							</div>
+						</div>
+
+						<div className="mt-6 flex flex-col sm:flex-row gap-3">
+							<Button
+								type="button"
+								onClick={onSyncDescription}
+								disabled={
+									!analysisEntry?.analysis || syncingActivityId === activity.id
+								}
+								className="flex-1 py-4 font-bold bg-gradient-to-br from-orange-600 to-rose-500 border-none rounded-xl shadow-lg shadow-rose-500/20 active:scale-[0.98] transition-all disabled:opacity-50"
+							>
+								{syncingActivityId === activity.id
+									? "Syncing to Strava..."
+									: "Sync to Strava Description"}
+							</Button>
+						</div>
+
+						{syncStatusById[activity.id] === "success" ? (
+							<p className="mt-3 text-emerald-400 text-sm text-center font-semibold animate-in fade-in slide-in-from-top-1">
+								✓ Sync successful!
+							</p>
+						) : null}
+						{syncStatusById[activity.id] === "error" ? (
+							<p className="mt-3 text-rose-300 text-sm text-center font-semibold">
+								✕ Sync failed. Please try again.
+							</p>
+						) : null}
+					</Card>
+				</div>
 			</section>
-
-			<style>{`
-				.activity-detail-grid {
-					grid-template-columns: minmax(0, 1fr) minmax(360px, 0.95fr);
-				}
-
-				@media (max-width: 960px) {
-					.activity-detail-grid {
-						grid-template-columns: 1fr;
-					}
-
-					.analysis-panel {
-						order: -1;
-					}
-
-					.activity-metrics-grid {
-						grid-template-columns: repeat(2, minmax(0, 1fr));
-					}
-
-					.activity-extra-grid {
-						grid-template-columns: 1fr 1fr;
-					}
-				}
-
-				@media (max-width: 640px) {
-					.activity-metrics-grid {
-						grid-template-columns: 1fr 1fr;
-					}
-
-					.activity-extra-grid {
-						grid-template-columns: 1fr;
-					}
-				}
-			`}</style>
 		</main>
 	);
 }
 
 function DetailMetric({ label, value }: { label: string; value: string }) {
 	return (
-		<Card style={{ padding: "1rem", borderRadius: 16 }}>
-			<p style={{ margin: 0, fontSize: "0.82rem", color: "#94a3b8" }}>
-				{label}
-			</p>
-			<p
-				style={{
-					margin: "0.35rem 0 0",
-					fontSize: "1.6rem",
-					fontWeight: 800,
-					color: "#fff",
-				}}
-			>
-				{value}
-			</p>
+		<Card className="p-4 rounded-2xl border-white/10 bg-white/5">
+			<p className="m-0 text-xs text-slate-400">{label}</p>
+			<p className="mt-1.5 text-2xl font-extrabold text-white">{value}</p>
 		</Card>
 	);
 }
 
 function DetailMetaRow({ label, value }: { label: string; value: string }) {
 	return (
-		<div
-			style={{
-				padding: "0.85rem 0.95rem",
-				borderRadius: 14,
-				background: "rgba(15,23,42,0.45)",
-				border: "1px solid rgba(255,255,255,0.08)",
-			}}
-		>
-			<p style={{ margin: 0, fontSize: "0.78rem", color: "#94a3b8" }}>
+		<div className="p-3.5 rounded-xl bg-slate-900/45 border border-white/5">
+			<p className="m-0 text-[10px] uppercase tracking-wider text-slate-500 font-bold">
 				{label}
 			</p>
-			<p
-				style={{
-					margin: "0.35rem 0 0",
-					fontSize: "0.95rem",
-					fontWeight: 600,
-					color: "#e2e8f0",
-					lineHeight: 1.5,
-				}}
-			>
+			<p className="mt-1 text-sm font-semibold text-slate-200 leading-snug">
 				{value}
 			</p>
 		</div>
@@ -938,14 +713,6 @@ function formatSpeedAsPace(value?: number): string {
 		.toString()
 		.padStart(2, "0");
 	return `${minutes}'${seconds}"/km`;
-}
-
-function formatWatts(value?: number): string {
-	return Number.isFinite(value) ? `${Math.round(value ?? 0)} W` : "N/A";
-}
-
-function formatMeters(value?: number): string {
-	return Number.isFinite(value) ? `${Math.round(value ?? 0)} m` : "N/A";
 }
 
 function formatDuration(seconds?: number): string {

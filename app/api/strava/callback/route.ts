@@ -75,30 +75,27 @@ export async function GET(request: Request) {
 			return NextResponse.redirect(redirectTarget);
 		}
 
-		redirectTarget.searchParams.set("strava_auth", "success");
-		redirectTarget.searchParams.set("access_token", payload.access_token);
-		redirectTarget.searchParams.set("refresh_token", payload.refresh_token);
-		redirectTarget.searchParams.set("expires_at", String(payload.expires_at));
+		const fragment = new URLSearchParams({
+			strava_auth: "success",
+			access_token: payload.access_token,
+			refresh_token: payload.refresh_token,
+			expires_at: String(payload.expires_at),
+		});
 
 		if (payload.athlete?.id) {
-			redirectTarget.searchParams.set("athlete_id", String(payload.athlete.id));
-			redirectTarget.searchParams.set(
+			fragment.set("athlete_id", String(payload.athlete.id));
+			fragment.set(
 				"athlete_name",
 				[payload.athlete.firstname, payload.athlete.lastname]
 					.filter(Boolean)
 					.join(" ")
 					.trim(),
 			);
-			redirectTarget.searchParams.set(
-				"athlete_city",
-				payload.athlete.city ?? "",
-			);
-			redirectTarget.searchParams.set(
-				"athlete_country",
-				payload.athlete.country ?? "",
-			);
+			fragment.set("athlete_city", payload.athlete.city ?? "");
+			fragment.set("athlete_country", payload.athlete.country ?? "");
 		}
 
+		redirectTarget.hash = fragment.toString();
 		return NextResponse.redirect(redirectTarget);
 	} catch {
 		redirectTarget.searchParams.set("strava_auth", "error");

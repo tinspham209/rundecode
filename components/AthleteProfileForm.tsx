@@ -89,28 +89,16 @@ export function AthleteProfileForm({
 	const maxHrWatch = watch("maxHr");
 
 	return (
-		<Card
-			style={{
-				marginBottom: "1rem",
-				border: "2px solid #f97316",
-				borderRadius: 16,
-			}}
-		>
-			<CardHeader style={{ paddingTop: "1.5rem", paddingBottom: "0.75rem" }}>
-				<CardTitle
-					style={{
-						fontSize: "1.25rem",
-						marginBottom: "0.5rem",
-						color: "#f97316",
-					}}
-				>
+		<Card className="mb-4 border-2 border-orange-500 rounded-2xl">
+			<CardHeader className="pt-6 pb-3">
+				<CardTitle className="text-xl mb-2 text-orange-500">
 					Athlete Profile: Basic Information
 				</CardTitle>
-				<CardDescription style={{ fontSize: "0.9rem", lineHeight: 1.5 }}>
-					Điền thông tin runner để AI cá nhân hoá phân tích tốt hơn.
+				<CardDescription className="text-sm leading-relaxed">
+					Fill in your runner information for better AI-personalized analysis.
 				</CardDescription>
 			</CardHeader>
-			<CardContent style={{ paddingTop: "1rem" }}>
+			<CardContent className="pt-4">
 				<form
 					onSubmit={handleSubmit((values) => {
 						onSubmit({
@@ -132,18 +120,12 @@ export function AthleteProfileForm({
 							},
 						});
 					})}
-					style={{ display: "grid", gap: "1rem" }}
+					className="grid gap-4"
 				>
-					<div
-						style={{
-							display: "grid",
-							gap: "0.7rem",
-							gridTemplateColumns: "1fr 1fr",
-						}}
-						className="athlete-profile-grid"
-					>
+					<div className="grid gap-3 grid-cols-1 md:grid-cols-2">
 						<Input
 							label="Name *"
+							id="profile-name"
 							error={errors.name?.message}
 							{...register("name", {
 								required: "Name is required",
@@ -151,46 +133,72 @@ export function AthleteProfileForm({
 									value.trim().length > 0 || "Name is required",
 							})}
 						/>
-						<Input label="Location" {...register("location")} />
+						<Input
+							label="Location"
+							id="profile-location"
+							{...register("location")}
+						/>
 						<div>
-							<label style={labelStyle}>Running level</label>
-							<select {...register("runningLevel")} style={inputStyle}>
+							<label
+								htmlFor="profile-level"
+								className="block mb-1 text-xs text-slate-400"
+							>
+								Running level
+							</label>
+							<select
+								id="profile-level"
+								{...register("runningLevel")}
+								className="w-full px-3 py-2.5 rounded-xl border-2 border-orange-500 bg-orange-500/5 text-slate-200 text-sm font-medium transition-all"
+							>
 								<option value="beginner">Beginner</option>
 								<option value="intermediate">Intermediate</option>
 								<option value="advanced">Advanced</option>
 								<option value="competitive">Competitive</option>
 							</select>
 						</div>
-						<Input label="Age" type="number" {...register("age")} />
+						<Input
+							label="Age"
+							id="profile-age"
+							type="number"
+							{...register("age")}
+						/>
 						<Input
 							label="Weight (kg)"
+							id="profile-weight"
 							type="number"
 							{...register("weightKg")}
 						/>
 						<Input
 							label="Height (cm)"
+							id="profile-height"
 							type="number"
 							{...register("heightCm")}
 						/>
-						<Input label="Max HR" type="number" {...register("maxHr")} />
+						<Input
+							label="Max HR"
+							id="profile-max-hr"
+							type="number"
+							{...register("maxHr")}
+						/>
 						<Input
 							label="Resting HR"
+							id="profile-resting-hr"
 							type="number"
 							{...register("restingHr")}
 						/>
-						<Input label="VO2Max" type="number" {...register("vo2max")} />
+						<Input
+							label="VO2Max"
+							id="profile-vo2max"
+							type="number"
+							{...register("vo2max")}
+						/>
 					</div>
 
-					<div style={{ display: "grid", gap: "0.55rem" }}>
-						<div
-							style={{
-								display: "flex",
-								alignItems: "center",
-								justifyContent: "space-between",
-								gap: "0.6rem",
-							}}
-						>
-							<label style={labelStyle}>HR Zones (bpm range)</label>
+					<div className="grid gap-2">
+						<div className="flex items-center justify-between gap-2">
+							<label className="block mb-1 text-xs text-slate-400">
+								HR Zones (bpm range)
+							</label>
 							<Button
 								type="button"
 								size="sm"
@@ -212,48 +220,47 @@ export function AthleteProfileForm({
 								Auto-calculate from Max HR
 							</Button>
 						</div>
-						<div
-							style={{
-								display: "grid",
-								gap: "0.7rem",
-								gridTemplateColumns: "1fr 1fr",
-							}}
-							className="athlete-profile-grid"
-						>
-							<Input label="Z1" placeholder="116-134" {...register("z1")} />
-							<Input label="Z2" placeholder="135-150" {...register("z2")} />
-							<Input label="Z3" placeholder="151-165" {...register("z3")} />
-							<Input label="Z4" placeholder="166-174" {...register("z4")} />
-							<Input label="Z5" placeholder="175-182" {...register("z5")} />
+						<div className="grid gap-3 grid-cols-2 md:grid-cols-5">
+							<Input
+								label="Z1"
+								id="profile-z1"
+								placeholder="116-134"
+								{...register("z1")}
+							/>
+							<Input
+								label="Z2"
+								id="profile-z2"
+								placeholder="135-150"
+								{...register("z2")}
+							/>
+							<Input
+								label="Z3"
+								id="profile-z3"
+								placeholder="151-165"
+								{...register("z3")}
+							/>
+							<Input
+								label="Z4"
+								id="profile-z4"
+								placeholder="166-174"
+								{...register("z4")}
+							/>
+							<Input
+								label="Z5"
+								id="profile-z5"
+								placeholder="175-182"
+								{...register("z5")}
+							/>
 						</div>
 					</div>
 
 					<Button
 						type="submit"
 						disabled={saving}
-						style={{
-							width: "100%",
-							padding: "0.8rem 1.2rem",
-							fontSize: "1rem",
-							fontWeight: 600,
-							background: "linear-gradient(135deg,#f97316,#f59e0b)",
-							border: "none",
-							color: "#fff",
-							borderRadius: 10,
-							cursor: saving ? "not-allowed" : "pointer",
-							opacity: saving ? 0.6 : 1,
-						}}
+						className="w-full py-3 text-base font-semibold bg-gradient-to-r from-orange-500 to-amber-500 border-none text-white rounded-xl cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
 					>
-						{saving ? "Đang lưu..." : "Lưu profile"}
+						{saving ? "Saving..." : "Save Profile"}
 					</Button>
-
-					<style>{`
-						@media (max-width: 768px) {
-							.athlete-profile-grid {
-								grid-template-columns: 1fr !important;
-							}
-						}
-					`}</style>
 				</form>
 			</CardContent>
 		</Card>
@@ -265,23 +272,22 @@ const Input = React.forwardRef<
 	React.InputHTMLAttributes<HTMLInputElement> & {
 		label: string;
 		error?: string;
+		id: string;
 	}
->(function Input({ label, error, ...props }, ref) {
+>(function Input({ label, error, id, ...props }, ref) {
 	return (
 		<div>
-			<label style={labelStyle}>{label}</label>
-			<input ref={ref} aria-label={label} {...props} style={inputStyle} />
-			{error ? (
-				<p
-					style={{
-						margin: "0.35rem 0 0",
-						fontSize: "0.75rem",
-						color: "#fda4af",
-					}}
-				>
-					{error}
-				</p>
-			) : null}
+			<label htmlFor={id} className="block mb-1 text-xs text-slate-400">
+				{label}
+			</label>
+			<input
+				ref={ref}
+				id={id}
+				aria-label={label}
+				{...props}
+				className="w-full px-3 py-2.5 rounded-xl border-2 border-orange-500 bg-orange-500/5 text-slate-200 text-sm font-medium transition-all"
+			/>
+			{error ? <p className="mt-1.5 text-xs text-rose-300">{error}</p> : null}
 		</div>
 	);
 });
@@ -290,25 +296,6 @@ function toNumber(value: string): number | undefined {
 	const parsed = Number(value);
 	return Number.isFinite(parsed) && value !== "" ? parsed : undefined;
 }
-
-const labelStyle: React.CSSProperties = {
-	display: "block",
-	marginBottom: "0.3rem",
-	fontSize: "0.75rem",
-	color: "#94a3b8",
-};
-
-const inputStyle: React.CSSProperties = {
-	width: "100%",
-	padding: "0.65rem 0.8rem",
-	borderRadius: 10,
-	border: "2px solid #f97316",
-	background: "rgba(249,115,22,0.06)",
-	color: "#e2e8f0",
-	fontSize: "0.95rem",
-	fontWeight: 500,
-	transition: "all 0.2s ease",
-};
 
 function calcZones(maxHr: number) {
 	const range = (minP: number, maxP: number) => {

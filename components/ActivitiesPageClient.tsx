@@ -65,7 +65,10 @@ export function ActivitiesPageClient() {
 	useEffect(() => {
 		if (bootstrapped) return;
 
-		const session = parseStravaSessionFromSearch(searchParams);
+		const hashFragment = window.location.hash.slice(1);
+		const hashParams = new URLSearchParams(hashFragment);
+
+		const session = parseStravaSessionFromSearch(hashParams);
 		if (session) {
 			setSession(session);
 			setBootstrapped(true);
@@ -73,7 +76,10 @@ export function ActivitiesPageClient() {
 			return;
 		}
 
-		if (searchParams?.get("strava_auth") === "error") {
+		if (
+			hashParams?.get("strava_auth") === "error" ||
+			searchParams?.get("strava_auth") === "error"
+		) {
 			showError("Xác thực Strava thất bại. Vui lòng thử lại.");
 			window.history.replaceState({}, "", window.location.pathname);
 		}
@@ -189,52 +195,24 @@ export function ActivitiesPageClient() {
 
 	if (!isAuthenticated) {
 		return (
-			<main
-				style={{ maxWidth: 1200, margin: "0 auto", padding: "2.5rem 1.5rem" }}
-			>
-				<section style={{ maxWidth: 760, margin: "0 auto" }}>
-					<h1
-						style={{
-							margin: "0 0 1rem",
-							fontWeight: 800,
-							fontSize: "clamp(2rem, 5vw, 3rem)",
-							color: "#fff",
-							letterSpacing: "-0.03em",
-						}}
-					>
+			<main className="max-w-300 mx-auto px-6 py-10">
+				<section className="max-w-190 mx-auto">
+					<h1 className="mb-4 font-extrabold text-[clamp(2rem,5vw,3rem)] text-white tracking-tight">
 						Activities Dashboard
 					</h1>
-					<p
-						style={{ margin: "0 0 1.5rem", color: "#94a3b8", lineHeight: 1.7 }}
-					>
-						Đăng nhập Strava để xem danh sách hoạt động gần đây và tiếp tục tới
-						màn hình phân tích chi tiết.
+					<p className="mb-6 text-slate-400 leading-relaxed">
+						Log in with Strava to view your recent activities and proceed to
+						detailed analysis.
 					</p>
 
-					<Card style={{ border: "2px solid #f97316", borderRadius: 20 }}>
+					<Card className="border-2 border-orange-500 rounded-[20px] overflow-hidden">
 						<CardHeader>
-							<div
-								style={{
-									display: "flex",
-									alignItems: "center",
-									gap: "0.75rem",
-								}}
-							>
-								<div
-									style={{
-										width: 44,
-										height: 44,
-										borderRadius: 12,
-										background: "linear-gradient(135deg,#f97316,#f59e0b)",
-										display: "flex",
-										alignItems: "center",
-										justifyContent: "center",
-									}}
-								>
-									<Activity size={22} color="#fff" />
+							<div className="flex items-center gap-3">
+								<div className="w-11 h-11 rounded-xl bg-linear-to-br from-orange-500 to-amber-500 flex items-center justify-center">
+									<Activity size={22} className="text-white" />
 								</div>
 								<div>
-									<CardTitle style={{ fontSize: "1.2rem", margin: 0 }}>
+									<CardTitle className="text-lg m-0">
 										Login with Strava
 									</CardTitle>
 									<CardDescription>
@@ -247,14 +225,7 @@ export function ActivitiesPageClient() {
 							<Button
 								type="button"
 								onClick={onConnectStrava}
-								style={{
-									width: "100%",
-									padding: "0.9rem 1.25rem",
-									fontWeight: 700,
-									background: "linear-gradient(135deg,#f97316,#f59e0b)",
-									border: "none",
-									borderRadius: 12,
-								}}
+								className="w-full py-6 font-bold bg-linear-to-br from-orange-500 to-amber-500 border-none rounded-xl"
 							>
 								Login to Strava
 							</Button>
@@ -266,46 +237,17 @@ export function ActivitiesPageClient() {
 	}
 
 	return (
-		<main
-			style={{ maxWidth: 1280, margin: "0 auto", padding: "2.5rem 1.5rem" }}
-		>
-			<div
-				style={{
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "space-between",
-					gap: "1rem",
-					flexWrap: "wrap",
-					marginBottom: "1.5rem",
-				}}
-			>
-				<h1
-					style={{
-						margin: 0,
-						fontWeight: 800,
-						fontSize: "clamp(2rem, 5vw, 3rem)",
-						color: "#fff",
-						letterSpacing: "-0.03em",
-					}}
-				>
+		<main className="max-w-[1280px] mx-auto px-6 py-10">
+			<div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+				<h1 className="m-0 font-extrabold text-[clamp(2rem,5vw,3rem)] text-white tracking-tight">
 					Activities Dashboard
 				</h1>
 
-				<div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+				<div className="flex flex-wrap gap-3">
 					{isProfileComplete ? (
-						<div
-							style={{
-								display: "inline-flex",
-								alignItems: "center",
-								gap: "0.5rem",
-								padding: "0.55rem 0.9rem",
-								borderRadius: 999,
-								background: "rgba(15,23,42,0.55)",
-								border: "1px solid rgba(255,255,255,0.1)",
-							}}
-						>
-							<CheckCircle2 size={16} color="#22c55e" />
-							<span style={{ fontSize: "0.85rem", color: "#e2e8f0" }}>
+						<div className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-slate-900/55 border border-white/10">
+							<CheckCircle2 size={16} className="text-emerald-500" />
+							<span className="text-xs text-slate-200">
 								Strava Connected
 								{athlete?.firstname ? ` · ${athlete.firstname}` : ""}
 							</span>
@@ -326,57 +268,35 @@ export function ActivitiesPageClient() {
 			</div>
 
 			{!isProfileComplete ? (
-				<section style={{ maxWidth: 860, margin: "0 auto 1.5rem" }}>
-					<p style={{ margin: "0 0 1rem", color: "#94a3b8", lineHeight: 1.7 }}>
-						Hoàn thiện athlete profile trước để tiếp tục vào danh sách hoạt
-						động.
+				<section className="max-w-[860px] mx-auto mb-6">
+					<p className="mb-4 text-slate-400 leading-relaxed">
+						Please complete your athlete profile to view your activity list.
 					</p>
 					<AthleteProfileForm
 						defaultValue={profileDefault}
 						onSubmit={(value: AthleteProfile) => {
 							setProfile(value);
-							toast.success("Lưu profile thành công.");
+							toast.success("Profile saved successfully.");
 						}}
 					/>
 				</section>
 			) : (
 				<>
-					<div
-						style={{
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "space-between",
-							gap: "1rem",
-							flexWrap: "wrap",
-							marginBottom: "1.25rem",
-						}}
-					>
+					<div className="flex flex-wrap items-center justify-between gap-4 mb-5">
 						<div>
-							<p style={{ margin: 0, fontSize: "0.9rem", color: "#94a3b8" }}>
+							<p className="m-0 text-sm text-slate-400">
 								Recent activities load automatically when you open this page.
 							</p>
 							{monthlyContext && weeklyContext ? (
-								<p
-									style={{
-										margin: "0.5rem 0 0",
-										fontSize: "0.8rem",
-										color: "#94a3b8",
-									}}
-								>
-									Tuần này: {weeklyContext.runsThisWeek} buổi ·{" "}
+								<p className="mt-2 text-xs text-slate-400">
+									This week: {weeklyContext.runsThisWeek} runs ·{" "}
 									{weeklyContext.totalDistanceKm} km · pace{" "}
-									{weeklyContext.avgPacePerKm} — Tháng này:{" "}
-									{monthlyContext.totalRuns} buổi ·{" "}
+									{weeklyContext.avgPacePerKm} — This month:{" "}
+									{monthlyContext.totalRuns} runs ·{" "}
 									{monthlyContext.totalDistanceKm} km.
 								</p>
 							) : athleteStats ? (
-								<p
-									style={{
-										margin: "0.5rem 0 0",
-										fontSize: "0.8rem",
-										color: "#94a3b8",
-									}}
-								>
+								<p className="mt-2 text-xs text-slate-400">
 									YTD runs: {athleteStats.ytd_run_totals?.count ?? 0} ·{" "}
 									{(
 										(athleteStats.ytd_run_totals?.distance ?? 0) / 1000
@@ -385,8 +305,8 @@ export function ActivitiesPageClient() {
 								</p>
 							) : null}
 						</div>
-						<div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-							<Link href="/profile" style={{ textDecoration: "none" }}>
+						<div className="flex flex-wrap gap-3">
+							<Link href="/profile" className="no-underline">
 								<Button type="button" variant="secondary">
 									View Profile
 								</Button>
@@ -395,16 +315,10 @@ export function ActivitiesPageClient() {
 								type="button"
 								onClick={onFetchActivities}
 								disabled={fetchingActivities}
-								style={{
-									padding: "0.7rem 1.15rem",
-									fontWeight: 700,
-									background: "linear-gradient(135deg,#f97316,#f59e0b)",
-									border: "none",
-									borderRadius: 12,
-								}}
+								className="px-4.5 py-3 font-bold bg-gradient-to-br from-orange-500 to-amber-500 border-none rounded-xl"
 							>
 								{fetchingActivities
-									? "Đang tải hoạt động..."
+									? "Loading activities..."
 									: "Refresh Activities"}
 							</Button>
 						</div>

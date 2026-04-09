@@ -130,13 +130,13 @@ describe("ActivityDetailPageClient", () => {
 			screen.getByRole("link", { name: /back to activities/i }),
 		).toBeInTheDocument();
 		expect(screen.getByText(/steady aerobic workout/i)).toBeInTheDocument();
-		expect(screen.getByText(/additional activity data/i)).toBeInTheDocument();
-		expect(screen.getByText(/select ai model/i)).toBeInTheDocument();
+		expect(screen.getByText(/performance details/i)).toBeInTheDocument();
+		expect(screen.getByLabelText(/model:/i)).toBeInTheDocument();
 		expect(
-			screen.getByRole("button", { name: /generate report/i }),
+			screen.getByRole("button", { name: /generate ai report/i }),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole("button", { name: /sync to strava/i }),
+			screen.getByRole("button", { name: /sync to strava description/i }),
 		).toBeDisabled();
 	});
 });

@@ -12,20 +12,8 @@ const DynamicRouteMap = dynamic(
 	{
 		ssr: false,
 		loading: () => (
-			<div
-				style={{
-					height: 180,
-					borderRadius: 12,
-					background: "rgba(255,255,255,0.04)",
-					border: "1px solid rgba(255,255,255,0.08)",
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					fontSize: "0.8rem",
-					color: "#94a3b8",
-				}}
-			>
-				Đang tải bản đồ...
+			<div className="h-[180px] rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs text-slate-400">
+				Loading map...
 			</div>
 		),
 	},
@@ -64,39 +52,20 @@ export function ActivityCard({
 	const activityDescription = activity.description?.trim();
 
 	return (
-		<Card style={{ overflow: "hidden", padding: 0, borderRadius: 16 }}>
+		<Card className="overflow-hidden p-0 rounded-2xl border-white/10">
 			{/* Map — full width, flush to card edge */}
 			{routeCoordinates.length >= 2 ? (
-				<div style={{ borderRadius: "16px 16px 0 0", overflow: "hidden" }}>
+				<div className="rounded-t-2xl overflow-hidden">
 					<DynamicRouteMap coordinates={routeCoordinates} />
 				</div>
 			) : (
-				<div
-					style={{
-						height: 180,
-						borderRadius: "16px 16px 0 0",
-						background: "rgba(255,255,255,0.04)",
-						border: "1px dashed rgba(255,255,255,0.12)",
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						fontSize: "0.82rem",
-						color: "#94a3b8",
-					}}
-				>
-					Indoor run / không có polyline route
+				<div className="h-[180px] rounded-t-2xl bg-white/5 border border-dashed border-white/10 flex items-center justify-center text-xs text-slate-400">
+					Indoor run / no polyline route
 				</div>
 			)}
 
 			{/* 3-column metrics: Distance | Pace | Date */}
-			<div
-				style={{
-					display: "grid",
-					gridTemplateColumns: "1fr 1fr 1fr",
-					padding: "1rem 1rem 0.75rem",
-					textAlign: "center",
-				}}
-			>
+			<div className="grid grid-cols-3 p-4 pb-3 text-center">
 				<DashMetric label="Distance" value={`${distanceKm.toFixed(2)} km`} />
 				<DashMetric label="Pace" value={pace} />
 				<DashMetric label="Date" value={compactDate} />
@@ -104,139 +73,69 @@ export function ActivityCard({
 			<span className="sr-only">{formattedTime}</span>
 
 			{/* Analyze button */}
-			<div style={{ padding: "0 1rem 1rem" }}>
+			<div className="p-4 pt-0">
 				<Button
 					type="button"
 					disabled={disabled || isAnalyzing}
 					onClick={() => onAnalyze(activity)}
-					style={{
-						width: "100%",
-						padding: "0.8rem 1rem",
-						fontSize: "1rem",
-						fontWeight: 700,
-						background: isAnalyzing
-							? "rgba(249,115,22,0.5)"
-							: "linear-gradient(135deg,#f97316,#ea4300)",
-						border: "none",
-						color: "#fff",
-						borderRadius: 10,
-						cursor: disabled || isAnalyzing ? "not-allowed" : "pointer",
-					}}
+					className={`w-full py-3 text-base font-bold text-white rounded-xl border-none transition-all ${
+						isAnalyzing
+							? "bg-orange-500/50 cursor-not-allowed"
+							: "bg-gradient-to-br from-orange-500 to-amber-600 hover:shadow-lg hover:shadow-orange-500/20 active:scale-[0.98]"
+					}`}
 				>
 					{isAnalyzing
-						? "Đang phân tích..."
+						? "Analyzing..."
 						: (primaryActionLabel ?? "Analyze with AI")}
 				</Button>
 			</div>
 
 			{/* Description + analysis result (shown after analyzing) */}
 			{activityDescription || analysisText ? (
-				<div
-					style={{
-						padding: "0 1rem 1rem",
-						borderTop: "1px solid rgba(255,255,255,0.07)",
-					}}
-				>
+				<div className="p-4 pt-0 border-t border-white/5">
 					{activityDescription ? (
-						<div
-							style={{
-								marginTop: "1rem",
-								borderRadius: 12,
-								border: "1px solid rgba(255,255,255,0.09)",
-								background: "rgba(15,23,42,0.55)",
-								padding: "0.8rem",
-							}}
-						>
-							<p
-								style={{
-									margin: 0,
-									fontWeight: 700,
-									fontSize: "0.82rem",
-									color: "#e2e8f0",
-								}}
-							>
-								Mô tả hiện tại trên Strava
+						<div className="mt-4 rounded-xl border border-white/10 bg-slate-900/55 p-3">
+							<p className="m-0 font-bold text-xs text-slate-200">
+								Current Strava description
 							</p>
-							<p
-								style={{
-									margin: "0.5rem 0 0",
-									fontSize: "0.82rem",
-									lineHeight: 1.55,
-									color: "#cbd5e1",
-									whiteSpace: "pre-wrap",
-								}}
-							>
+							<p className="mt-2 text-xs leading-relaxed text-slate-300 whitespace-pre-wrap">
 								{activityDescription}
 							</p>
 						</div>
 					) : null}
 
 					{analysisText ? (
-						<div
-							style={{
-								marginTop: "1rem",
-								borderRadius: 12,
-								border: "1px solid rgba(255,255,255,0.09)",
-								background: "rgba(2,6,23,0.52)",
-								padding: "0.8rem",
-							}}
-						>
-							<p
-								style={{
-									margin: 0,
-									fontWeight: 700,
-									fontSize: "0.82rem",
-									color: "#e2e8f0",
-								}}
-							>
-								Kết quả phân tích
+						<div className="mt-4 rounded-xl border border-white/10 bg-slate-950/50 p-3">
+							<p className="m-0 font-bold text-xs text-slate-200">
+								Analysis result
 							</p>
 							<textarea
 								aria-label={`Analysis for activity ${activity.id}`}
 								readOnly
 								value={analysisText}
-								style={{
-									width: "100%",
-									minHeight: 200,
-									marginTop: "0.55rem",
-									borderRadius: 10,
-									border: "1px solid rgba(255,255,255,0.08)",
-									background: "rgba(0,0,0,0.35)",
-									color: "#e2e8f0",
-									padding: "0.75rem",
-									fontSize: "0.83rem",
-									lineHeight: 1.5,
-									resize: "vertical",
-								}}
+								className="w-full min-h-[200px] mt-2 rounded-xl border border-white/10 bg-black/35 text-slate-200 p-3 text-xs leading-relaxed resize-y focus:outline-none focus:ring-1 focus:ring-orange-500/30"
 							/>
 
-							<div
-								style={{
-									display: "flex",
-									alignItems: "center",
-									gap: "0.6rem",
-									marginTop: "0.6rem",
-									flexWrap: "wrap",
-								}}
-							>
+							<div className="flex flex-wrap items-center gap-3 mt-3">
 								<Button
 									type="button"
 									variant="secondary"
 									onClick={() => onSyncDescription?.(activity)}
 									disabled={isSyncingDescription}
+									className="text-xs"
 								>
 									{isSyncingDescription
-										? "Đang sync lên Strava..."
-										: "Sync analysis lên Strava description"}
+										? "Syncing to Strava..."
+										: "Sync to Strava description"}
 								</Button>
 								{syncStatus === "success" ? (
-									<span style={{ fontSize: "0.75rem", color: "#6ee7b7" }}>
-										Đã sync mô tả thành công.
+									<span className="text-xs text-emerald-400">
+										Sync successful.
 									</span>
 								) : null}
 								{syncStatus === "error" ? (
-									<span style={{ fontSize: "0.75rem", color: "#fda4af" }}>
-										Sync thất bại, vui lòng thử lại.
+									<span className="text-xs text-rose-300">
+										Sync failed, please try again.
 									</span>
 								) : null}
 							</div>
@@ -251,27 +150,11 @@ export function ActivityCard({
 /** Dashboard-style metric: large value on top, muted label below, center-aligned */
 function DashMetric({ label, value }: { label: string; value: string }) {
 	return (
-		<div style={{ textAlign: "center", padding: "0 0.25rem" }}>
-			<p
-				style={{
-					margin: 0,
-					fontSize: "1rem",
-					fontWeight: 700,
-					color: "#fff",
-					lineHeight: 1.2,
-				}}
-			>
+		<div className="text-center px-1">
+			<p className="m-0 text-base font-bold text-white leading-tight">
 				{value}
 			</p>
-			<p
-				style={{
-					margin: "0.25rem 0 0",
-					fontSize: "0.72rem",
-					color: "#94a3b8",
-					textTransform: "uppercase",
-					letterSpacing: "0.04em",
-				}}
-			>
+			<p className="mt-1 text-[10px] text-slate-400 uppercase tracking-wider">
 				{label}
 			</p>
 		</div>

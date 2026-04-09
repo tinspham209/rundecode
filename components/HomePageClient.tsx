@@ -14,149 +14,60 @@ import { Button } from "./ui/button";
 
 export function HomePageClient() {
 	return (
-		<main
-			style={{ maxWidth: 1200, margin: "0 auto", padding: "2.5rem 1.5rem" }}
-		>
+		<main className="max-w-[1200px] mx-auto px-6 py-10">
 			{/* Navigation / Logo Section */}
-			<nav
-				style={{
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					marginBottom: "2rem",
-				}}
-			>
-				<div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-					<div
-						style={{
-							width: 56,
-							height: 56,
-							borderRadius: 16,
-							background: "linear-gradient(135deg,#f97316,#f59e0b)",
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
-							boxShadow: "0 4px 20px rgba(249,115,22,0.5)",
-						}}
-					>
-						<Activity size={28} color="#fff" />
+			<nav className="flex items-center justify-center mb-8">
+				<div className="flex items-center gap-4">
+					<div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/50">
+						<Activity size={28} className="text-white" />
 					</div>
 					<div>
-						<div
-							style={{
-								fontWeight: 800,
-								fontSize: "1.75rem",
-								color: "#fff",
-								letterSpacing: "-0.02em",
-								lineHeight: 1.1,
-							}}
-						>
-							<span style={{ color: "#fff" }}>Run</span>
-							<span style={{ color: "#f97316" }}>Decode</span>
+						<div className="font-extrabold text-[1.75rem] text-white tracking-tight leading-none">
+							<span className="text-white">Run</span>
+							<span className="text-orange-500">Decode</span>
 						</div>
 					</div>
 				</div>
 			</nav>
 
 			{/* Hero section */}
-			<div style={{ textAlign: "center", marginBottom: "3rem" }}>
-				<h1
-					style={{
-						margin: "0 0 1rem",
-						fontWeight: 800,
-						fontSize: "clamp(2rem, 5vw, 3rem)",
-						color: "#fff",
-						letterSpacing: "-0.03em",
-						lineHeight: 1.15,
-					}}
-				>
+			<div className="text-center mb-12">
+				<h1 className="mb-4 font-extrabold text-[clamp(2rem,5vw,3rem)] text-white tracking-tight leading-[1.15]">
 					AI Running Analysis for
 					<br />
 					Strava or FIT Workouts
 				</h1>
-				<p
-					style={{
-						margin: "0 auto",
-						maxWidth: 640,
-						fontSize: "1rem",
-						lineHeight: 1.7,
-						color: "#94a3b8",
-					}}
-				>
+				<p className="max-w-[640px] mx-auto text-base leading-relaxed text-slate-400">
 					RunDecode helps runners analyze Strava activities or FIT uploads with
-					Vietnamese AI insights, clear performance context, and fast copy/sync
-					workflow. Start with Strava for quick activity analysis, or switch to
-					manual FIT upload when needed.
+					AI insights, clear performance context, and fast copy/sync workflow.
+					Start with Strava for quick activity analysis, or switch to manual FIT
+					upload when needed.
 				</p>
 			</div>
 
 			{/* Main Content Grid: 2-col desktop, 1-col mobile */}
-			<div
-				style={{
-					display: "grid",
-					gridTemplateColumns: "1fr 1fr",
-					gap: "1.5rem",
-					marginBottom: "2rem",
-				}}
-				className="home-grid"
-			>
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 				{/* Strava Integration Card */}
-				<Card
-					style={{
-						border: "2px solid #f97316",
-						borderRadius: 16,
-						overflow: "hidden",
-					}}
-				>
-					<CardHeader style={{ paddingTop: "1.5rem", paddingBottom: "0.5rem" }}>
-						<div
-							style={{
-								display: "flex",
-								alignItems: "center",
-								gap: "0.75rem",
-								marginBottom: "0.75rem",
-							}}
-						>
-							<div
-								style={{
-									width: 36,
-									height: 36,
-									borderRadius: 10,
-									background: "linear-gradient(135deg,#f97316,#f59e0b)",
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "center",
-									boxShadow: "0 2px 8px rgba(249,115,22,0.4)",
-								}}
-							>
-								<Activity size={18} color="#fff" />
+				<Card className="border-2 border-orange-500 rounded-2xl overflow-hidden">
+					<CardHeader className="pt-6 pb-2">
+						<div className="flex items-center gap-3 mb-3">
+							<div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-md shadow-orange-500/40">
+								<Activity size={18} className="text-white" />
 							</div>
-							<CardTitle style={{ fontSize: "1.15rem", margin: 0 }}>
+							<CardTitle className="text-lg m-0">
 								Strava Activities Dashboard
 							</CardTitle>
 						</div>
-						<CardDescription style={{ fontSize: "0.9rem", lineHeight: 1.6 }}>
-							Mở luồng Strava để đăng nhập nếu cần, tự tải hoạt động gần đây, và
-							đi thẳng tới màn hình phân tích từng buổi chạy.
+						<CardDescription className="text-sm leading-relaxed text-slate-400">
+							Connect your Strava account to automatically load recent
+							activities and proceed to analysis.
 						</CardDescription>
 					</CardHeader>
-					<CardContent style={{ paddingTop: "0.75rem" }}>
-						<Link
-							href="/activities"
-							style={{ textDecoration: "none", display: "block" }}
-						>
+					<CardContent className="pt-3">
+						<Link href="/activities" className="no-underline block">
 							<Button
 								type="button"
-								style={{
-									width: "100%",
-									padding: "0.85rem 1.2rem",
-									fontSize: "1rem",
-									fontWeight: 600,
-									background: "linear-gradient(135deg,#f97316,#f59e0b)",
-									border: "none",
-									cursor: "pointer",
-									borderRadius: 10,
-								}}
+								className="w-full py-3.5 px-5 text-base font-semibold bg-gradient-to-br from-orange-500 to-amber-500 border-none text-white rounded-xl cursor-pointer"
 							>
 								Open Activities Dashboard
 							</Button>
@@ -165,81 +76,31 @@ export function HomePageClient() {
 				</Card>
 
 				{/* Manual FIT Upload Card */}
-				<Card
-					style={{
-						border: "2px solid #f97316",
-						borderRadius: 16,
-						overflow: "hidden",
-					}}
-				>
-					<CardHeader style={{ paddingTop: "1.5rem", paddingBottom: "0.5rem" }}>
-						<div
-							style={{
-								display: "flex",
-								alignItems: "center",
-								gap: "0.75rem",
-								marginBottom: "0.75rem",
-							}}
-						>
-							<div
-								style={{
-									width: 36,
-									height: 36,
-									borderRadius: 10,
-									background: "rgba(249,115,22,0.15)",
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "center",
-									border: "1px solid rgba(249,115,22,0.3)",
-								}}
-							>
-								<Activity size={18} color="#f97316" />
+				<Card className="border-2 border-orange-500 rounded-2xl overflow-hidden">
+					<CardHeader className="pt-6 pb-2">
+						<div className="flex items-center gap-3 mb-3">
+							<div className="w-9 h-9 rounded-xl bg-orange-500/15 flex items-center justify-center border border-orange-500/30">
+								<Activity size={18} className="text-orange-500" />
 							</div>
-							<CardTitle style={{ fontSize: "1.15rem", margin: 0 }}>
-								Manual FIT flow
-							</CardTitle>
+							<CardTitle className="text-lg m-0">Manual FIT flow</CardTitle>
 						</div>
-						<CardDescription style={{ fontSize: "0.9rem", lineHeight: 1.6 }}>
-							Nếu bạn muốn phân tích thủ công bằng file .fit, dùng luồng tách
-							riêng tại /manual.
+						<CardDescription className="text-sm leading-relaxed text-slate-400">
+							Upload your .fit files manually for analysis if you don&apos;t use
+							Strava or want to analyze offline workouts.
 						</CardDescription>
 					</CardHeader>
-					<CardContent style={{ paddingTop: "0.75rem" }}>
-						<Link
-							href="/manual"
-							style={{ textDecoration: "none", display: "block" }}
-						>
+					<CardContent className="pt-3">
+						<Link href="/manual" className="no-underline block">
 							<Button
 								type="button"
-								style={{
-									width: "100%",
-									padding: "0.85rem 1.2rem",
-									fontSize: "1rem",
-									fontWeight: 600,
-									background: "linear-gradient(135deg,#f97316,#f59e0b)",
-									border: "none",
-									cursor: "pointer",
-									borderRadius: 10,
-								}}
+								className="w-full py-3.5 px-5 text-base font-semibold bg-gradient-to-br from-orange-500 to-amber-500 border-none text-white rounded-xl cursor-pointer"
 							>
-								Manual Fit flow
+								Manual FIT flow
 							</Button>
 						</Link>
 					</CardContent>
 				</Card>
 			</div>
-
-			{/* Responsive Grid Adjustment for smaller screens */}
-			<style>{`
-				@media (max-width: 768px) {
-					.home-grid {
-						grid-template-columns: 1fr !important;
-					}
-					main {
-						padding: 1.5rem 1rem;
-					}
-				}
-			`}</style>
 		</main>
 	);
 }

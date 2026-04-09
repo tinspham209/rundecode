@@ -56,20 +56,40 @@ describe("AthleteProfileForm", () => {
 		expect(screen.getByLabelText("Z5")).toHaveValue("182-190");
 	});
 
-	it("requires name before submit", async () => {
+	it("should show validation error when name is empty", async () => {
 		const user = userEvent.setup();
 		const onSubmit = vi.fn();
 
 		render(
 			<AthleteProfileForm
-				defaultValue={{ runningLevel: "intermediate" }}
 				onSubmit={onSubmit}
+				defaultValue={{ name: "", runningLevel: "intermediate" }}
 			/>,
 		);
 
-		await user.click(screen.getByRole("button", { name: /lưu profile/i }));
+		await user.click(screen.getByRole("button", { name: /save profile/i }));
 
 		expect(onSubmit).not.toHaveBeenCalled();
-		expect(screen.getByText(/name is required/i)).toBeInTheDocument();
+		expect(await screen.findByText(/name is required/i)).toBeInTheDocument();
+	});
+
+	it("should call onSubmit when form is valid", async () => {
+		const user = userEvent.setup();
+		const onSubmit = vi.fn();
+
+		render(<AthleteProfileForm onSubmit={onSubmit} />);
+
+		const nameInput = screen.getByLabelText(/name \*/i);
+		await user.clear(nameInput);
+		await user.type(nameInput, "John Doe");
+
+		await user.click(screen.getByRole("button", { name: /save profile/i }));
+
+		expect(onSubmit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				name: "John Doe",
+				runningLevel: "intermediate",
+			}),
+		);
 	});
 });
