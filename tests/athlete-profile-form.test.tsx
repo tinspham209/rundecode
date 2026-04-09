@@ -48,9 +48,28 @@ describe("AthleteProfileForm", () => {
 		);
 
 		await user.type(screen.getByLabelText("Max HR"), "190");
-		await user.click(screen.getByRole("button", { name: /auto-calculate from max hr/i }));
+		await user.click(
+			screen.getByRole("button", { name: /auto-calculate from max hr/i }),
+		);
 
 		expect(screen.getByLabelText("Z1")).toHaveValue("122-141");
 		expect(screen.getByLabelText("Z5")).toHaveValue("182-190");
+	});
+
+	it("requires name before submit", async () => {
+		const user = userEvent.setup();
+		const onSubmit = vi.fn();
+
+		render(
+			<AthleteProfileForm
+				defaultValue={{ runningLevel: "intermediate" }}
+				onSubmit={onSubmit}
+			/>,
+		);
+
+		await user.click(screen.getByRole("button", { name: /lưu profile/i }));
+
+		expect(onSubmit).not.toHaveBeenCalled();
+		expect(screen.getByText(/name is required/i)).toBeInTheDocument();
 	});
 });

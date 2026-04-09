@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 	const code = requestUrl.searchParams.get("code");
 	const error = requestUrl.searchParams.get("error");
 
-	const redirectTarget = new URL("/", request.url);
+	const redirectTarget = new URL("/activities", request.url);
 
 	if (error) {
 		redirectTarget.searchParams.set("strava_auth", "error");
@@ -35,7 +35,8 @@ export async function GET(request: Request) {
 	const clientId = process.env.STRAVA_CLIENT_ID;
 	const clientSecret = process.env.STRAVA_CLIENT_SECRET;
 	const redirectUri =
-		process.env.STRAVA_REDIRECT_URI ?? new URL("/api/strava/callback", request.url).toString();
+		process.env.STRAVA_REDIRECT_URI ??
+		new URL("/api/strava/callback", request.url).toString();
 
 	if (!clientId || !clientSecret) {
 		redirectTarget.searchParams.set("strava_auth", "error");

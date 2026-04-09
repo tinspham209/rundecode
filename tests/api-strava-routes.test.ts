@@ -136,6 +136,46 @@ describe("Strava API routes", () => {
 		);
 	});
 
+	it("GET /api/strava/activities/[id] validates activity id and proxies detail success", async () => {
+		const { GET } = await import("../app/api/strava/activities/[id]/route");
+
+		const badResponse = await GET(
+			new Request("http://localhost/api/strava/activities/abc", {
+				headers: { authorization: "Bearer token-123" },
+			}),
+			{ params: { id: "abc" } },
+		);
+		expect(badResponse.status).toBe(400);
+
+		const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({ id: 77, name: "Long Run", average_speed: 3.12 }),
+				{
+					status: 200,
+					headers: { "content-type": "application/json" },
+				},
+			),
+		);
+
+		const okResponse = await GET(
+			new Request("http://localhost/api/strava/activities/77", {
+				headers: { authorization: "Bearer token-123" },
+			}),
+			{ params: { id: "77" } },
+		);
+		const body = await okResponse.json();
+
+		expect(okResponse.status).toBe(200);
+		expect(body.activity.id).toBe(77);
+		expect(body.activity.average_speed).toBe(3.12);
+		const [upstreamUrl, init] = fetchSpy.mock.calls[0] as [URL, RequestInit];
+		expect(String(upstreamUrl)).toContain("/api/v3/activities/77");
+		expect(String(upstreamUrl)).toContain("include_all_efforts=false");
+		expect((init.headers as Record<string, string>).authorization).toBe(
+			"Bearer token-123",
+		);
+	});
+
 	it("GET /api/strava/streams validates activity id and proxies fixed stream params", async () => {
 		const { GET } = await import("../app/api/strava/streams/route");
 		const badResponse = await GET(

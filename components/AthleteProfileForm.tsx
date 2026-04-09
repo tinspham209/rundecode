@@ -5,7 +5,13 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import type { AthleteProfile } from "../lib/stravaTypes";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "./ui/card";
 
 type AthleteProfileFormProps = {
 	defaultValue?: Partial<AthleteProfile>;
@@ -35,7 +41,14 @@ export function AthleteProfileForm({
 	onSubmit,
 	saving,
 }: AthleteProfileFormProps) {
-	const { register, handleSubmit, reset, setValue, watch } = useForm<ProfileFormData>({
+	const {
+		register,
+		handleSubmit,
+		reset,
+		setValue,
+		watch,
+		formState: { errors },
+	} = useForm<ProfileFormData>({
 		defaultValues: {
 			name: defaultValue?.name ?? "",
 			location: defaultValue?.location ?? "",
@@ -76,14 +89,28 @@ export function AthleteProfileForm({
 	const maxHrWatch = watch("maxHr");
 
 	return (
-		<Card style={{ marginBottom: "1rem" }}>
-			<CardHeader>
-				<CardTitle>Athlete profile</CardTitle>
-				<CardDescription>
+		<Card
+			style={{
+				marginBottom: "1rem",
+				border: "2px solid #f97316",
+				borderRadius: 16,
+			}}
+		>
+			<CardHeader style={{ paddingTop: "1.5rem", paddingBottom: "0.75rem" }}>
+				<CardTitle
+					style={{
+						fontSize: "1.25rem",
+						marginBottom: "0.5rem",
+						color: "#f97316",
+					}}
+				>
+					Athlete Profile: Basic Information
+				</CardTitle>
+				<CardDescription style={{ fontSize: "0.9rem", lineHeight: 1.5 }}>
 					Điền thông tin runner để AI cá nhân hoá phân tích tốt hơn.
 				</CardDescription>
 			</CardHeader>
-			<CardContent>
+			<CardContent style={{ paddingTop: "1rem" }}>
 				<form
 					onSubmit={handleSubmit((values) => {
 						onSubmit({
@@ -105,10 +132,25 @@ export function AthleteProfileForm({
 							},
 						});
 					})}
-					style={{ display: "grid", gap: "0.8rem" }}
+					style={{ display: "grid", gap: "1rem" }}
 				>
-					<div style={{ display: "grid", gap: "0.7rem", gridTemplateColumns: "1fr 1fr" }}>
-						<Input label="Name" {...register("name", { required: true })} />
+					<div
+						style={{
+							display: "grid",
+							gap: "0.7rem",
+							gridTemplateColumns: "1fr 1fr",
+						}}
+						className="athlete-profile-grid"
+					>
+						<Input
+							label="Name *"
+							error={errors.name?.message}
+							{...register("name", {
+								required: "Name is required",
+								validate: (value) =>
+									value.trim().length > 0 || "Name is required",
+							})}
+						/>
 						<Input label="Location" {...register("location")} />
 						<div>
 							<label style={labelStyle}>Running level</label>
@@ -120,15 +162,34 @@ export function AthleteProfileForm({
 							</select>
 						</div>
 						<Input label="Age" type="number" {...register("age")} />
-						<Input label="Weight (kg)" type="number" {...register("weightKg")} />
-						<Input label="Height (cm)" type="number" {...register("heightCm")} />
+						<Input
+							label="Weight (kg)"
+							type="number"
+							{...register("weightKg")}
+						/>
+						<Input
+							label="Height (cm)"
+							type="number"
+							{...register("heightCm")}
+						/>
 						<Input label="Max HR" type="number" {...register("maxHr")} />
-						<Input label="Resting HR" type="number" {...register("restingHr")} />
+						<Input
+							label="Resting HR"
+							type="number"
+							{...register("restingHr")}
+						/>
 						<Input label="VO2Max" type="number" {...register("vo2max")} />
 					</div>
 
 					<div style={{ display: "grid", gap: "0.55rem" }}>
-						<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.6rem" }}>
+						<div
+							style={{
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "space-between",
+								gap: "0.6rem",
+							}}
+						>
 							<label style={labelStyle}>HR Zones (bpm range)</label>
 							<Button
 								type="button"
@@ -151,7 +212,14 @@ export function AthleteProfileForm({
 								Auto-calculate from Max HR
 							</Button>
 						</div>
-						<div style={{ display: "grid", gap: "0.7rem", gridTemplateColumns: "1fr 1fr" }}>
+						<div
+							style={{
+								display: "grid",
+								gap: "0.7rem",
+								gridTemplateColumns: "1fr 1fr",
+							}}
+							className="athlete-profile-grid"
+						>
 							<Input label="Z1" placeholder="116-134" {...register("z1")} />
 							<Input label="Z2" placeholder="135-150" {...register("z2")} />
 							<Input label="Z3" placeholder="151-165" {...register("z3")} />
@@ -160,9 +228,32 @@ export function AthleteProfileForm({
 						</div>
 					</div>
 
-					<Button type="submit" disabled={saving}>
+					<Button
+						type="submit"
+						disabled={saving}
+						style={{
+							width: "100%",
+							padding: "0.8rem 1.2rem",
+							fontSize: "1rem",
+							fontWeight: 600,
+							background: "linear-gradient(135deg,#f97316,#f59e0b)",
+							border: "none",
+							color: "#fff",
+							borderRadius: 10,
+							cursor: saving ? "not-allowed" : "pointer",
+							opacity: saving ? 0.6 : 1,
+						}}
+					>
 						{saving ? "Đang lưu..." : "Lưu profile"}
 					</Button>
+
+					<style>{`
+						@media (max-width: 768px) {
+							.athlete-profile-grid {
+								grid-template-columns: 1fr !important;
+							}
+						}
+					`}</style>
 				</form>
 			</CardContent>
 		</Card>
@@ -171,12 +262,26 @@ export function AthleteProfileForm({
 
 const Input = React.forwardRef<
 	HTMLInputElement,
-	React.InputHTMLAttributes<HTMLInputElement> & { label: string }
->(function Input({ label, ...props }, ref) {
+	React.InputHTMLAttributes<HTMLInputElement> & {
+		label: string;
+		error?: string;
+	}
+>(function Input({ label, error, ...props }, ref) {
 	return (
 		<div>
 			<label style={labelStyle}>{label}</label>
 			<input ref={ref} aria-label={label} {...props} style={inputStyle} />
+			{error ? (
+				<p
+					style={{
+						margin: "0.35rem 0 0",
+						fontSize: "0.75rem",
+						color: "#fda4af",
+					}}
+				>
+					{error}
+				</p>
+			) : null}
 		</div>
 	);
 });
@@ -195,11 +300,14 @@ const labelStyle: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
 	width: "100%",
-	padding: "0.55rem 0.65rem",
+	padding: "0.65rem 0.8rem",
 	borderRadius: 10,
-	border: "1px solid rgba(255,255,255,0.1)",
-	background: "rgba(255,255,255,0.04)",
+	border: "2px solid #f97316",
+	background: "rgba(249,115,22,0.06)",
 	color: "#e2e8f0",
+	fontSize: "0.95rem",
+	fontWeight: 500,
+	transition: "all 0.2s ease",
 };
 
 function calcZones(maxHr: number) {

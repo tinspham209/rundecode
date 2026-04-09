@@ -197,11 +197,13 @@ Important test files include:
 
 ## 11. Documentation policy
 
-Only these four docs are maintained:
+Primary docs are:
 
 - `README.md`
 - `docs/PROPOSAL.md`
 - `docs/DEVELOPER.md`
 - `docs/ARCHITECTURE.md`
+- `docs/DESIGN.md`
+- `docs/EFFECTIVE_PROMPTING_STITCH.md`
 
 If a product/process change is significant, update these docs instead of creating new proposal variants.

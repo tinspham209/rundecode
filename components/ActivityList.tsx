@@ -19,6 +19,7 @@ type ActivityListProps = {
 	syncingActivityId: number | null;
 	activityAnalysisById: Record<number, ActivityAnalysisItem>;
 	syncStatusById: Record<number, "idle" | "success" | "error">;
+	primaryActionLabel?: string;
 };
 
 export function ActivityList({
@@ -29,6 +30,7 @@ export function ActivityList({
 	syncingActivityId,
 	activityAnalysisById,
 	syncStatusById,
+	primaryActionLabel,
 }: ActivityListProps) {
 	if (activities.length === 0) {
 		return (
@@ -39,21 +41,34 @@ export function ActivityList({
 	}
 
 	return (
-		<div style={{ display: "grid", gap: "1rem" }}>
-			{activities.map((activity) => (
-				/* per activity result slot */
-				<ActivityCard
-					key={activity.id}
-					activity={activity}
-					disabled={analyzingActivityId !== null && analyzingActivityId !== activity.id}
-					isAnalyzing={analyzingActivityId === activity.id}
-					onAnalyze={onAnalyze}
-					onSyncDescription={onSyncDescription}
-					isSyncingDescription={syncingActivityId === activity.id}
-					analysisText={activityAnalysisById[activity.id]?.analysis}
-					syncStatus={syncStatusById[activity.id] ?? "idle"}
-				/>
-			))}
+		<div>
+			{/* Activities Grid: 3-col desktop, 2-col tablet, 1-col mobile */}
+			<div
+				style={{
+					display: "grid",
+					gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+					gap: "1.5rem",
+				}}
+			>
+				{activities.map((activity) => (
+					/* per activity result slot */
+					<ActivityCard
+						key={activity.id}
+						activity={activity}
+						disabled={
+							analyzingActivityId !== null &&
+							analyzingActivityId !== activity.id
+						}
+						isAnalyzing={analyzingActivityId === activity.id}
+						onAnalyze={onAnalyze}
+						primaryActionLabel={primaryActionLabel}
+						onSyncDescription={onSyncDescription}
+						isSyncingDescription={syncingActivityId === activity.id}
+						analysisText={activityAnalysisById[activity.id]?.analysis}
+						syncStatus={syncStatusById[activity.id] ?? "idle"}
+					/>
+				))}
+			</div>
 		</div>
 	);
 }
