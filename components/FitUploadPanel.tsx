@@ -28,7 +28,7 @@ type UploadForm = {
 };
 
 export function FitUploadPanel() {
-	const { register, handleSubmit, reset } = useForm<UploadForm>();
+	const { handleSubmit, reset } = useForm<UploadForm>();
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [previewMetadata, setPreviewMetadata] = useState<Metadata | null>(null);
 	const [parsingPreview, setParsingPreview] = useState(false);
@@ -39,6 +39,10 @@ export function FitUploadPanel() {
 	const loading = useAnalysisStore((s) => s.loading);
 	const error = useAnalysisStore((s) => s.error);
 	const selectedModel = useAnalysisStore((s) => s.selectedModel);
+	const intensityScore = useAnalysisStore((s) => s.intensityScore);
+	const recoveryHours = useAnalysisStore((s) => s.recoveryHours);
+	const coachingFlags = useAnalysisStore((s) => s.coachingFlags);
+	const trainingIntentMatch = useAnalysisStore((s) => s.trainingIntentMatch);
 	const setLoading = useAnalysisStore((s) => s.setLoading);
 	const setResult = useAnalysisStore((s) => s.setResult);
 	const setError = useAnalysisStore((s) => s.setError);
@@ -184,7 +188,7 @@ export function FitUploadPanel() {
 				return;
 			}
 
-			setResult(payload.analysis, payload.metadata);
+			setResult(payload, payload.metadata);
 		} catch {
 			showError("Lỗi mạng. Vui lòng thử lại.");
 		}
@@ -209,33 +213,15 @@ export function FitUploadPanel() {
 	};
 
 	return (
-		<>
-			<Card style={{ marginBottom: "1.5rem" }}>
-				<div
-					style={{
-						position: "absolute",
-						top: -60,
-						right: -60,
-						width: 220,
-						height: 220,
-						borderRadius: "50%",
-						background: "rgba(249,115,22,0.10)",
-						filter: "blur(60px)",
-						pointerEvents: "none",
-					}}
-				/>
+		<div className="flex flex-col gap-6">
+			<Card className="relative overflow-hidden">
+				<div className="absolute -top-[60px] -right-[60px] w-[220px] h-[220px] rounded-full bg-orange-500/10 blur-3xl pointer-events-none" />
 
 				<CardHeader>
-					<div
-						style={{
-							display: "flex",
-							alignItems: "flex-start",
-							justifyContent: "space-between",
-						}}
-					>
+					<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
 						<div>
-							<Badge style={{ marginBottom: "0.75rem" }}>
-								<Zap size={10} />
+							<Badge className="mb-3">
+								<Zap size={10} className="mr-1" />
 								AI-powered
 							</Badge>
 							<CardTitle>Phân tích buổi chạy thủ công (.fit)</CardTitle>
@@ -244,222 +230,154 @@ export function FitUploadPanel() {
 								Việt chi tiết cho bạn.
 							</CardDescription>
 						</div>
+
+						<div className="flex items-center gap-3">
+							<label
+								htmlFor="model-select"
+								className="text-slate-400 text-sm font-medium"
+							>
+								Model:
+							</label>
+							<select
+								id="model-select"
+								value={selectedModel}
+								onChange={(event) => setSelectedModel(event.target.value)}
+								className="px-3 py-2 rounded-xl border border-white/15 bg-slate-900/70 text-slate-200 text-xs sm:text-sm focus-visible:ring-1 focus-visible:ring-orange-500/50 outline-none transition-all"
+							>
+								{FREE_MODELS.map((model) => (
+									<option key={model} value={model}>
+										{model.split("/").pop()}
+									</option>
+								))}
+							</select>
+						</div>
 					</div>
 				</CardHeader>
 
 				<CardContent>
-					<form onSubmit={onSubmit}>
-						<div
-							{...getRootProps()}
-							style={{
-								borderRadius: 16,
-								border: `2px dashed ${isDragActive ? "#f97316" : selectedFile ? "#10b981" : "rgba(255,255,255,0.12)"}`,
-								background: isDragActive
-									? "rgba(249,115,22,0.06)"
-									: selectedFile
-										? "rgba(16,185,129,0.05)"
-										: "rgba(255,255,255,0.02)",
-								padding: "2.5rem 1.5rem",
-								textAlign: "center",
-								cursor: "pointer",
-								transition: "all 0.25s ease",
-								boxShadow: isDragActive
-									? "0 0 40px rgba(249,115,22,0.18)"
-									: "none",
-								marginBottom: "1.25rem",
-							}}
-						>
-							<input {...getInputProps()} />
-
-							<input
-								id="fit-file"
-								aria-label="Upload FIT file"
-								type="file"
-								accept=".fit"
-								style={{
-									position: "absolute",
-									width: 1,
-									height: 1,
-									opacity: 0,
-									overflow: "hidden",
-									clip: "rect(0,0,0,0)",
-									whiteSpace: "nowrap",
-								}}
-								{...register("file")}
-								onChange={(event) => {
-									const file = event.target.files?.[0] ?? null;
-									handleFileSelection(file);
-								}}
-							/>
-
-							{selectedFile ? (
-								<div
-									style={{
-										display: "flex",
-										flexDirection: "column",
-										alignItems: "center",
-										gap: "0.5rem",
+					<div
+						{...getRootProps()}
+						className={`
+							relative min-h-[180px] rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center p-6 text-center
+							${isDragActive ? "border-orange-500/50 bg-orange-500/5" : "border-white/10 hover:border-white/20 hover:bg-white/5"}
+						`}
+					>
+						<input {...getInputProps()} id="fit-file-upload" />
+						<label htmlFor="fit-file-upload" className="sr-only">
+							Upload .fit file
+						</label>
+						{selectedFile ? (
+							<div className="flex flex-col items-center gap-3 animate-in fade-in zoom-in-95 duration-300">
+								<div className="p-4 rounded-full bg-orange-500/10 text-orange-400">
+									<CheckCircle2 size={32} />
+								</div>
+								<div>
+									<p className="m-0 font-bold text-slate-100">
+										{selectedFile.name}
+									</p>
+									<p className="m-0 text-sm text-slate-500">
+										{(selectedFile.size / 1024).toFixed(1)} KB · Ready to
+										analyze
+									</p>
+								</div>
+								<Button
+									type="button"
+									variant="ghost"
+									size="sm"
+									className="text-slate-400 hover:text-white"
+									onClick={(event) => {
+										event.stopPropagation();
+										handleFileSelection(null);
 									}}
 								>
-									<CheckCircle2
-										size={44}
-										color="#10b981"
-										className="animate-glow-pulse"
-									/>
-									<div
-										style={{
-											fontWeight: 700,
-											color: "#fff",
-											fontSize: "1rem",
-											marginTop: 4,
-										}}
-									>
-										{selectedFile.name}
-									</div>
-									<div style={{ fontSize: "0.75rem", color: "#6ee7b7" }}>
-										{(selectedFile.size / 1024).toFixed(1)} KB · sẵn sàng phân
-										tích
-									</div>
+									Change file
+								</Button>
+							</div>
+						) : (
+							<div className="flex flex-col items-center gap-4">
+								<div className="p-4 rounded-full bg-white/5 text-slate-400">
+									<UploadCloud size={32} />
+								</div>
+								<div>
+									<p className="m-0 font-bold text-slate-200">
+										Click or drag .fit file here
+									</p>
+									<p className="m-0 text-sm text-slate-500 mt-1">
+										Supports Zepp, Amazfit exports (Max 10MB)
+									</p>
+								</div>
+							</div>
+						)}
+					</div>
+
+					{error && (
+						<div className="mt-4">
+							<ErrorAlert message={error} onRetry={retryCurrentStep} />
+						</div>
+					)}
+
+					<div className="mt-6">
+						<Button
+							type="button"
+							onClick={() => void onSubmit()}
+							disabled={loading || !selectedFile || !!error || parsingPreview}
+							className="w-full py-6 font-bold text-lg bg-gradient-to-br from-orange-500 to-amber-500 border-none rounded-2xl shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 active:scale-[0.99] transition-all"
+						>
+							{loading ? (
+								<div className="flex items-center">
+									<LoadingSpinner message="" />
+									<span className="ml-2">AI is decoding...</span>
+								</div>
+							) : parsingPreview ? (
+								<div className="flex items-center">
+									<LoadingSpinner message="" />
+									<span className="ml-2">Checking data...</span>
 								</div>
 							) : (
-								<div
-									style={{
-										display: "flex",
-										flexDirection: "column",
-										alignItems: "center",
-										gap: "0.75rem",
-									}}
-								>
-									<div
-										style={{
-											width: 60,
-											height: 60,
-											borderRadius: 18,
-											background: "rgba(255,255,255,0.05)",
-											display: "flex",
-											alignItems: "center",
-											justifyContent: "center",
-											border: "1px solid rgba(255,255,255,0.08)",
-										}}
-									>
-										<UploadCloud size={26} color="#94a3b8" />
-									</div>
-									<div>
-										<div
-											style={{
-												fontWeight: 600,
-												color: "#e2e8f0",
-												fontSize: "0.95rem",
-											}}
-										>
-											Kéo thả file .fit vào đây
-										</div>
-										<div
-											style={{
-												color: "#64748b",
-												fontSize: "0.83rem",
-												marginTop: 4,
-											}}
-										>
-											hoặc nhấn để chọn từ thiết bị
-										</div>
-									</div>
-								</div>
+								"Phân tích buổi chạy ngay"
 							)}
-						</div>
-
-						{selectedFile && previewMetadata ? (
-							<div
-								style={{
-									marginBottom: "1rem",
-									display: "flex",
-									flexDirection: "column",
-									gap: "0.5rem",
-								}}
-							>
-								<label
-									style={{
-										fontSize: "0.875rem",
-										fontWeight: 500,
-										color: "#e2e8f0",
-									}}
-								>
-									Chọn mô hình AI
-								</label>
-								<select
-									value={selectedModel}
-									onChange={(e) => setSelectedModel(e.target.value)}
-									disabled={loading || parsingPreview}
-									style={{
-										padding: "0.625rem 0.85rem",
-										borderRadius: 8,
-										border: "1px solid rgba(255,255,255,0.1)",
-										background: "rgba(255,255,255,0.05)",
-										color: "#e2e8f0",
-										fontSize: "0.875rem",
-									}}
-								>
-									{FREE_MODELS.map((model) => (
-										<option
-											key={model}
-											value={model}
-											style={{ background: "#1e293b", color: "#e2e8f0" }}
-										>
-											{model}
-										</option>
-									))}
-								</select>
-							</div>
-						) : null}
-
-						<Button
-							type="submit"
-							disabled={
-								loading || parsingPreview || !selectedFile || !previewMetadata
-							}
-							size="lg"
-							className="w-full sm:w-auto"
-						>
-							{parsingPreview
-								? "Đang parse preview..."
-								: loading
-									? "Đang phân tích..."
-									: "Analyze Run"}
 						</Button>
-					</form>
+					</div>
 				</CardContent>
 			</Card>
 
-			{parsingPreview ? (
-				<LoadingSpinner message="Đang parse file .fit để preview dữ liệu chạy..." />
-			) : null}
-			{loading ? (
-				<LoadingSpinner message="AI đang phân tích dữ liệu chạy của bạn..." />
-			) : null}
-			{error ? <ErrorAlert message={error} onRetry={retryCurrentStep} /> : null}
+			<div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+				<div className="order-2 lg:order-1 min-h-[400px]">
+					{analysis ? (
+						<AnalysisDisplay
+							analysis={analysis}
+							intensityScore={intensityScore}
+							recoveryHours={recoveryHours}
+							coachingFlags={coachingFlags}
+							trainingIntentMatch={trainingIntentMatch}
+							metadata={metadata!}
+							onReset={resetAnalysis}
+						/>
+					) : (
+						<div className="h-full flex flex-col items-center justify-center p-12 border-2 border-dashed border-white/5 rounded-3xl bg-black/20 text-slate-500">
+							<UploadCloud size={48} className="mb-4 opacity-20" />
+							<p className="text-center max-w-[280px]">
+								Upload your run data above to see the AI coaching analysis.
+							</p>
+						</div>
+					)}
+				</div>
 
-			{previewMetadata && !analysis ? (
-				<Card style={{ marginBottom: "1.5rem" }}>
-					<CardHeader>
-						<CardTitle>Preview dữ liệu từ FIT</CardTitle>
-						<CardDescription>
-							Xác nhận các chỉ số đã đúng trước khi bấm Analyze Run để tiết kiệm
-							lượt AI.
-						</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<MetadataSidebar metadata={previewMetadata} />
-					</CardContent>
-				</Card>
-			) : null}
-
-			{analysis && metadata ? (
-				<AnalysisDisplay
-					initialAnalysis={analysis}
-					metadata={metadata}
-					onReset={resetAnalysis}
-				/>
-			) : null}
-		</>
+				<div className="order-1 lg:order-2">
+					{previewMetadata || metadata ? (
+						<MetadataSidebar metadata={(previewMetadata || metadata)!} />
+					) : (
+						<div className="p-6 rounded-2xl border border-white/5 bg-white/5 text-center">
+							<p className="m-0 text-xs text-slate-500 font-medium uppercase tracking-widest">
+								Session Preview
+							</p>
+							<p className="mt-4 text-sm text-slate-600 italic">
+								No data loaded yet
+							</p>
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
 	);
 }

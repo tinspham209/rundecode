@@ -3,6 +3,10 @@ import {
 	buildRunAnalysisSystemPrompt,
 } from "../src/prompts/runAnalysisSystemPrompt";
 import type { ParsedFitData } from "./fitParser";
+import {
+	getExpectedIntentForDay,
+	guessTrainingIntent,
+} from "./stravaContextBuilder";
 import type {
 	AthleteProfile,
 	MonthlyContext,
@@ -59,7 +63,9 @@ export function buildPromptSegments(
 
 	return [
 		profile
-			? buildRunAnalysisSystemPrompt(profile)
+			? buildRunAnalysisSystemPrompt(profile, {
+					calories: parsed.session.totalCalories,
+				})
 			: RUN_ANALYSIS_SYSTEM_PROMPT,
 		structuredContext,
 		ADDITIONAL_GUARDRAILS,
@@ -108,21 +114,30 @@ export function buildStravaPromptSegments(input: {
 		"Ngữ cảnh gần đây:",
 		`- Tháng này: ${monthly?.totalRuns ?? 0} buổi, ${monthly?.totalDistanceKm ?? 0} km, pace TB ${monthly?.avgPacePerKm ?? "0'00\"/km"}`,
 		`- Tuần này: ${weekly?.runsThisWeek ?? 0} buổi, ${weekly?.totalDistanceKm ?? 0} km, pace TB ${weekly?.avgPacePerKm ?? "0'00\"/km"}`,
+		`- ACWR (Acute:Chronic Workload Ratio): ${weekly?.acwr ?? "N/A"} (Ngưỡng an toàn: 0.8 - 1.3)`,
 	];
 
 	const session = activity.session;
+	const startTime = new Date(session.startTime);
+	const expectedIntent = getExpectedIntentForDay(startTime);
+	const guessedIntent = guessTrainingIntent(activity);
+
 	const activityBlock = [
 		"Dữ liệu buổi chạy được chọn:",
 		`- Tên bài: ${session.activityName}`,
+		`- Thiết bị: ${session.device_name ?? "N/A"}`,
 		`- Thời điểm bắt đầu: ${session.startTime}`,
+		`- Dự định tập luyện (theo ngày): ${expectedIntent}`,
+		`- Phân loại thực tế (AI đoán): ${guessedIntent}`,
 		`- Quãng đường: ${session.totalDistanceKm.toFixed(2)} km`,
 		`- Moving time: ${session.movingTimeSec} giây`,
 		`- Elapsed time: ${session.elapsedTimeSec} giây`,
 		`- HR TB/Max: ${session.avgHeartRate}/${session.maxHeartRate} bpm`,
 		`- Cadence TB: ${session.avgCadenceSpm} spm`,
 		`- Pace TB: ${session.avgPacePerKm}`,
+		`- Tốc độ TB/Max: ${session.average_speed ? (session.average_speed * 3.6).toFixed(2) : "N/A"} / ${session.max_speed ? (session.max_speed * 3.6).toFixed(2) : "N/A"} km/h`,
 		`- Calories: ${session.totalCalories}`,
-		`- Elevation gain: ${session.totalAscent} m`,
+		`- Độ cao (Gain/High/Low): ${session.totalAscent}m / ${session.elev_high ?? "N/A"}m / ${session.elev_low ?? "N/A"}m`,
 		`- HR drift: ${activity.derived.hrDrift}`,
 		`- Pace variability: ${activity.derived.paceVariability}`,
 		`- Cadence variability: ${activity.derived.cadenceVariability}`,
@@ -141,7 +156,9 @@ export function buildStravaPromptSegments(input: {
 	].join("\n");
 
 	return [
-		buildRunAnalysisSystemPrompt(input.profile),
+		buildRunAnalysisSystemPrompt(input.profile, {
+			calories: activity.session.totalCalories,
+		}),
 		structuredContext,
 		ADDITIONAL_GUARDRAILS,
 	];

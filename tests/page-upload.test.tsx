@@ -39,7 +39,7 @@ describe("ManualPage upload flow", () => {
 	it("shows validation error for non-.fit file", async () => {
 		render(<ManualPage />);
 
-		const input = screen.getByLabelText(/upload fit file/i);
+		const input = screen.getByLabelText(/upload \.fit file/i);
 		const badFile = new File(["hello"], "run.tcx", { type: "text/plain" });
 
 		fireEvent.change(input, {
@@ -48,7 +48,7 @@ describe("ManualPage upload flow", () => {
 			},
 		});
 
-		expect(screen.getByRole("alert")).toHaveTextContent(/\.fit/i);
+		expect(await screen.findByRole("alert")).toHaveTextContent(/\.fit/i);
 	});
 
 	it("uploads valid .fit and renders analysis area", async () => {
@@ -79,6 +79,10 @@ describe("ManualPage upload flow", () => {
 				ok: true,
 				json: async () => ({
 					analysis: "Báo cáo phân tích chạy (Analysis by AI)\nNội dung",
+					intensityScore: 7,
+					recoveryHours: 24,
+					coachingFlags: ["HIGH_HR"],
+					trainingIntentMatch: true,
 					metadata: {
 						distance: 10.5,
 						pace: "5'40\"/km",
@@ -98,7 +102,7 @@ describe("ManualPage upload flow", () => {
 
 		render(<ManualPage />);
 
-		const input = screen.getByLabelText(/upload fit file/i);
+		const input = screen.getByLabelText(/upload \.fit file/i);
 		const fitBytes = new Uint8Array([
 			0x0e, 0x10, 0x5d, 0x08, 0, 0, 0, 0, 0x2e, 0x46, 0x49, 0x54,
 		]);
@@ -115,7 +119,9 @@ describe("ManualPage upload flow", () => {
 			);
 		});
 
-		await user.click(screen.getByRole("button", { name: /analyze run/i }));
+		await user.click(
+			screen.getByRole("button", { name: /phân tích buổi chạy ngay/i }),
+		);
 
 		await waitFor(() => {
 			expect(screen.getByLabelText(/analysis text/i)).toBeInTheDocument();
@@ -149,7 +155,7 @@ describe("ManualPage upload flow", () => {
 
 		render(<ManualPage />);
 
-		const input = screen.getByLabelText(/upload fit file/i);
+		const input = screen.getByLabelText(/upload \.fit file/i);
 		const fitBytes = new Uint8Array([
 			0x0e, 0x10, 0x5d, 0x08, 0, 0, 0, 0, 0x2e, 0x46, 0x49, 0x54,
 		]);

@@ -74,6 +74,7 @@ export type WeeklyContext = {
 	totalDistanceKm: number;
 	totalTimeHours: number;
 	avgPacePerKm: string;
+	acwr?: number; // Acute:Chronic Workload Ratio
 };
 
 export type StravaStreamsByType = {
@@ -87,6 +88,7 @@ export type StravaStreamsByType = {
 
 export type StravaExtractedActivity = {
 	session: {
+		activityId?: number;
 		totalDistanceKm: number;
 		movingTimeSec: number;
 		elapsedTimeSec: number;
@@ -98,6 +100,11 @@ export type StravaExtractedActivity = {
 		totalAscent: number;
 		startTime: string;
 		activityName: string;
+		device_name?: string;
+		average_speed?: number;
+		max_speed?: number;
+		elev_high?: number;
+		elev_low?: number;
 	};
 	laps: Array<{
 		lapNumber: number;

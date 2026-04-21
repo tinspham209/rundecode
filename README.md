@@ -20,9 +20,10 @@ Start with Strava for quick activity analysis, or switch to manual FIT upload wh
 - MVP allowlist: `Run`, `Walk`, `Hike/Hiking`, `Trail/TrailRun`
 - Show activity cards with:
   - route map (when polyline exists)
-  - metrics
+  - metrics (including HR Drift, Pace/Cadence Variability)
+  - Training Intent analysis (Expected vs Actual)
   - current Strava description
-  - per-activity AI analysis result
+  - per-activity AI analysis result with Intensity & Recovery scores
 - Sync generated analysis back into the Strava activity description
 
 ### Manual FIT flow
@@ -55,8 +56,8 @@ Start with Strava for quick activity analysis, or switch to manual FIT upload wh
 Source of truth: `lib/aiAnalyzer.ts`
 
 - Provider: OpenRouter
-- Analysis method: `generateAnalysis(...)`
-- Prompt source: `src/prompts/runAnalysisSystemPrompt.ts`
+- Analysis method: `generateAnalysis(...)` (returns structured JSON)
+- Prompt source: `src/prompts/runAnalysisSystemPrompt.ts` (Dynamic system prompt with profile integration)
 - Prompt assembly: `lib/buildPromptContext.ts`
 
 Current free-model list is defined in `FREE_MODELS` and the **default model is the first item in that array**.

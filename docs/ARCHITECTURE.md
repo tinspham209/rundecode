@@ -9,11 +9,11 @@ RunDecode is a stateless Next.js 14 application that supports two analysis entry
 
 Both flows converge into the same AI generation strategy:
 
-1. build system prompt
-2. build structured context
+1. build dynamic system prompt (profile-aware)
+2. build structured context (including derived metrics: HR drift, variability, ACWR)
 3. append additional guardrails
-4. call OpenRouter
-5. render editable plain-text analysis
+4. call OpenRouter (expecting JSON response)
+5. render editable plain-text analysis with structured scores
 
 ---
 
@@ -97,7 +97,7 @@ Both flows converge into the same AI generation strategy:
 
 Global analysis UI state:
 
-- `analysis`
+- `analysis` (structured: text, intensity, recovery, flags)
 - `metadata`
 - `loading`
 - `error`
@@ -201,6 +201,8 @@ Proxy layer for:
 #### `lib/stravaActivityExtractor.ts`
 
 - converts Strava activity + streams into normalized session/derived metrics
+- calculates HR drift, pace variability, and cadence variability
+- estimates calories if missing using HR/weight/age formula
 
 #### `app/api/analyze-strava/route.ts`
 
@@ -235,12 +237,12 @@ Dynamic runner profile values are sourced from the athlete profile form and merg
 - default model: first entry of `FREE_MODELS`
 - runtime-selected model supported
 - retry once on rate-limit style errors
-- returns normalized `{ analysis, tokensUsed, model }`
+- returns normalized `{ analysis, intensityScore, recoveryHours, coachingFlags, trainingIntentMatch, tokensUsed, model }`
 
 Current analysis output requirement:
 
-- plain text only
-- Vietnamese
+- structured JSON internal format
+- plain text analysis part (Vietnamese)
 - attribution header preserved per prompt rules
 
 ---

@@ -4,6 +4,7 @@ type JsonError = { error: string };
 
 type Body = {
 	activityId?: number;
+	name?: string;
 	description?: string;
 };
 
@@ -42,16 +43,21 @@ export async function POST(request: Request) {
 		);
 	}
 
-	const description = typeof body.description === "string" ? body.description.trim() : "";
-	if (!description) {
+	const description =
+		typeof body.description === "string" ? body.description.trim() : "";
+	const name = typeof body.name === "string" ? body.name.trim() : "";
+
+	if (!description && !name) {
 		return NextResponse.json<JsonError>(
-			{ error: "Description is required." },
+			{ error: "Description or name is required." },
 			{ status: 400 },
 		);
 	}
 
 	const upstream = `https://www.strava.com/api/v3/activities/${activityId}`;
-	const payload = new URLSearchParams({ description });
+	const params = new URLSearchParams();
+	if (description) params.set("description", description);
+	if (name) params.set("name", name);
 
 	try {
 		const response = await fetch(upstream, {
@@ -60,14 +66,17 @@ export async function POST(request: Request) {
 				authorization: `Bearer ${accessToken}`,
 				"content-type": "application/x-www-form-urlencoded",
 			},
-			body: payload.toString(),
+			body: params.toString(),
 			cache: "no-store",
 		});
 
 		const result = await response.json();
 		if (!response.ok) {
 			return NextResponse.json<JsonError>(
-				{ error: result?.message ?? "Failed to update Strava activity description." },
+				{
+					error:
+						result?.message ?? "Failed to update Strava activity description.",
+				},
 				{ status: response.status || 500 },
 			);
 		}

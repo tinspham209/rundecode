@@ -120,6 +120,10 @@ export async function POST(request: Request) {
 
 		return NextResponse.json({
 			analysis: analysisResponse.analysis,
+			intensityScore: analysisResponse.intensityScore,
+			recoveryHours: analysisResponse.recoveryHours,
+			coachingFlags: analysisResponse.coachingFlags,
+			trainingIntentMatch: analysisResponse.trainingIntentMatch,
 			metadata: {
 				distance: parsed.session.totalDistance,
 				pace: parsed.session.avgPace,

@@ -107,9 +107,10 @@ Always keep:
 
 ### Output contract
 
-- plain text only
-- Vietnamese
+- structured JSON internal response
+- plain text report (Vietnamese)
 - attribution preserved
+- includes intensity, recovery, and coaching insights
 - suitable for Strava description
 
 ---

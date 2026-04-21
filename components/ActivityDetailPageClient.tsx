@@ -14,10 +14,15 @@ import toast from "react-hot-toast";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { AnalysisDisplay } from "./AnalysisDisplay";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { FREE_MODELS } from "../lib/aiAnalyzer";
 import { extractStravaActivityData } from "../lib/stravaActivityExtractor";
-import type { StravaActivity, StravaStreamsByType } from "../lib/stravaTypes";
+import type {
+	AthleteProfile,
+	StravaActivity,
+	StravaStreamsByType,
+} from "../lib/stravaTypes";
 import { useAnalysisStore } from "../stores/analysisStore";
 import { useAuthStore } from "../stores/authStore";
 import { useProfileStore } from "../stores/profileStore";
@@ -64,6 +69,7 @@ export function ActivityDetailPageClient({
 	const setExtractedActivity = useStravaStore((s) => s.setExtractedActivity);
 	const setSyncingActivityId = useStravaStore((s) => s.setSyncingActivityId);
 	const setActivityAnalysis = useStravaStore((s) => s.setActivityAnalysis);
+	const resetActivityAnalysis = useStravaStore((s) => s.resetActivityAnalysis);
 	const setSyncStatus = useStravaStore((s) => s.setSyncStatus);
 	const updateActivityDescription = useStravaStore(
 		(s) => s.updateActivityDescription,
@@ -111,11 +117,13 @@ export function ActivityDetailPageClient({
 	}, []);
 
 	useEffect(() => {
-		if (!isAuthenticated || baseActivity || !Number.isFinite(id)) return;
+		if (!isAuthenticated || !Number.isFinite(id)) return;
 
-		let cancelled = false;
+		let isCancelled = false;
 
-		const hydrateActivity = async () => {
+		const fetchData = async () => {
+			if (baseActivity) return;
+
 			setFetchingFallback(true);
 			try {
 				const token = await ensureToken();
@@ -130,40 +138,23 @@ export function ActivityDetailPageClient({
 					return;
 				}
 
-				if (cancelled) return;
-				setActivities((payload.activities ?? []) as StravaActivity[]);
+				if (!isCancelled) {
+					setActivities((payload.activities ?? []) as StravaActivity[]);
+				}
 			} catch {
-				if (!cancelled) {
+				if (!isCancelled) {
 					showError("Network error while loading Strava activities.");
 				}
 			} finally {
-				if (!cancelled) {
+				if (!isCancelled) {
 					setFetchingFallback(false);
 				}
 			}
 		};
 
-		void hydrateActivity();
+		const fetchDetail = async () => {
+			if (activityDetail?.id === id || fetchingDetail) return;
 
-		return () => {
-			cancelled = true;
-		};
-	}, [
-		baseActivity,
-		ensureToken,
-		id,
-		isAuthenticated,
-		setActivities,
-		showError,
-	]);
-
-	useEffect(() => {
-		if (!isAuthenticated || !Number.isFinite(id)) return;
-		if (activityDetail?.id === id || fetchingDetail) return;
-
-		let cancelled = false;
-
-		const hydrateDetail = async () => {
 			setFetchingDetail(true);
 			try {
 				const token = await ensureToken();
@@ -178,43 +169,46 @@ export function ActivityDetailPageClient({
 					return;
 				}
 
-				if (cancelled) return;
-				const detail = payload.activity as StravaActivity;
-				setActivityDetail(detail);
-				setSelectedActivity(detail);
-				if (activities.some((item) => item.id === detail.id)) {
-					setActivities(
-						activities.map((item) =>
-							item.id === detail.id ? { ...item, ...detail } : item,
-						),
-					);
+				if (!isCancelled) {
+					const detail = payload.activity as StravaActivity;
+					setActivityDetail(detail);
+					setSelectedActivity(detail);
+					if (activities.some((item) => item.id === detail.id)) {
+						setActivities(
+							activities.map((item) =>
+								item.id === detail.id ? { ...item, ...detail } : item,
+							),
+						);
+					}
 				}
 			} catch {
-				if (!cancelled) {
+				if (!isCancelled) {
 					showError("Network error while loading activity detail.");
 				}
 			} finally {
-				if (!cancelled) {
+				if (!isCancelled) {
 					setFetchingDetail(false);
 				}
 			}
 		};
 
-		void hydrateDetail();
+		void fetchData();
+		void fetchDetail();
 
 		return () => {
-			cancelled = true;
+			isCancelled = true;
 		};
 	}, [
-		activities,
-		activityDetail?.id,
-		ensureToken,
-		fetchingDetail,
-		id,
 		isAuthenticated,
+		id,
+		baseActivity,
+		activityDetail?.id,
+		fetchingDetail,
+		ensureToken,
 		setActivities,
 		setSelectedActivity,
 		showError,
+		activities,
 	]);
 
 	const onAnalyze = useCallback(async () => {
@@ -246,7 +240,11 @@ export function ActivityDetailPageClient({
 			}
 
 			const normalizedStreams = normalizeStreams(streamsPayload.streams);
-			const extracted = extractStravaActivityData(activity, normalizedStreams);
+			const extracted = extractStravaActivityData(
+				activity,
+				normalizedStreams,
+				profile,
+			);
 			setExtractedActivity(extracted);
 
 			const analyzeRes = await fetch("/api/analyze-strava", {
@@ -268,11 +266,7 @@ export function ActivityDetailPageClient({
 				return;
 			}
 
-			setActivityAnalysis(
-				activity.id,
-				analyzePayload.analysis,
-				analyzePayload.metadata,
-			);
+			setActivityAnalysis(activity.id, analyzePayload, analyzePayload.metadata);
 			toast.success("AI analysis is ready.");
 		} catch (err) {
 			if (err instanceof Error && err.name === "AbortError") return;
@@ -491,7 +485,7 @@ export function ActivityDetailPageClient({
 							/>
 							<DetailMetaRow
 								label="Calories"
-								value={formatCalories(activity)}
+								value={formatCalories(activity, profile)}
 							/>
 							<DetailMetaRow
 								label="Max HR"
@@ -559,17 +553,24 @@ export function ActivityDetailPageClient({
 								</div>
 							) : null}
 
-							<div className="rounded-2xl border border-white/10 bg-black/40 p-5 shadow-inner">
-								<textarea
-									aria-label="Activity analysis"
-									readOnly
-									value={
-										analysisEntry?.analysis ??
-										"Select a model and click 'Generate AI Report' to start your analysis."
-									}
-									className="w-full min-h-[300px] bg-transparent border-none outline-none resize-y text-slate-200 text-base sm:text-lg leading-relaxed font-sans scrollbar-thin scrollbar-thumb-white/10"
+							{analysisEntry ? (
+								<AnalysisDisplay
+									analysis={analysisEntry.analysis}
+									intensityScore={analysisEntry.intensityScore}
+									recoveryHours={analysisEntry.recoveryHours}
+									coachingFlags={analysisEntry.coachingFlags}
+									trainingIntentMatch={analysisEntry.trainingIntentMatch}
+									metadata={analysisEntry.metadata}
+									onReset={() => resetActivityAnalysis(activity.id)}
 								/>
-							</div>
+							) : (
+								<div className="rounded-2xl border border-white/10 bg-black/40 p-5 shadow-inner">
+									<p className="text-slate-400 text-center py-20">
+										Select a model and click &quot;Generate AI Report&quot; to
+										start your analysis.
+									</p>
+								</div>
+							)}
 						</div>
 
 						<div className="mt-6 flex flex-col sm:flex-row gap-3">
@@ -697,11 +698,39 @@ function formatCadence(value?: number): string {
 	return Number.isFinite(value) ? `${Math.round((value ?? 0) * 2)} spm` : "N/A";
 }
 
-function formatCalories(activity: StravaActivity): string {
+function formatCalories(
+	activity: StravaActivity,
+	profile: AthleteProfile | null,
+): string {
 	const calories = activity.calories ?? activity.kilojoules;
-	return Number.isFinite(calories)
-		? `${Math.round(calories ?? 0)} kcal`
-		: "N/A";
+	if (Number.isFinite(calories) && (calories ?? 0) > 0) {
+		return `${Math.round(calories ?? 0)} kcal`;
+	}
+
+	// If missing, use the same estimation logic as the extractor
+	if (profile && profile.weightKg) {
+		const movingTimeSec = activity.moving_time;
+		const avgHR = activity.average_heartrate;
+
+		if (avgHR && profile.age) {
+			const durationMin = movingTimeSec / 60;
+			const weightLbs = profile.weightKg * 2.20462;
+			const estimated =
+				((0.6309 * avgHR +
+					0.1988 * weightLbs +
+					0.2017 * profile.age -
+					55.0969) /
+					4.184) *
+				durationMin;
+			if (estimated > 0) return `${Math.round(estimated)} kcal (est.)`;
+		}
+
+		const met = 8.5;
+		const estimated = met * profile.weightKg * (movingTimeSec / 3600);
+		return `${Math.round(estimated)} kcal (est.)`;
+	}
+
+	return "N/A";
 }
 
 function formatSpeedAsPace(value?: number): string {

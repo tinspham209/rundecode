@@ -1,6 +1,7 @@
 import type { ParsedSession } from "./fitParser";
 
 export type RunMetadata = {
+	activityId?: number;
 	distance: number;
 	pace: string;
 	time: string;

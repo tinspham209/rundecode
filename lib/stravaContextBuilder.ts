@@ -1,6 +1,7 @@
 import type {
 	MonthlyContext,
 	StravaActivity,
+	StravaExtractedActivity,
 	WeeklyContext,
 } from "./stravaTypes";
 
@@ -50,14 +51,50 @@ export function buildStravaMonthlyWeeklyContext(activities: StravaActivity[]): {
 	const weeklyDistance = totalDistanceKm(thisWeek);
 	const weeklyTime = totalMovingTimeHours(thisWeek);
 
+	// Calculate ACWR (Acute:Chronic Workload Ratio)
+	// Acute = current week distance
+	// Chronic = average of last 4 weeks (including current)
+	const weeklyLoads = calculateWeeklyLoads(runs, 4);
+	const acute = weeklyDistance;
+	const chronic =
+		weeklyLoads.length > 0
+			? weeklyLoads.reduce((a, b) => a + b, 0) / weeklyLoads.length
+			: acute;
+	const acwr = chronic > 0 ? acute / chronic : 1.0;
+
 	const weekly: WeeklyContext = {
 		runsThisWeek: thisWeek.length,
 		totalDistanceKm: round(weeklyDistance, 2),
 		totalTimeHours: round(weeklyTime, 2),
 		avgPacePerKm: paceFromDistanceAndTime(weeklyDistance, weeklyTime * 3600),
+		acwr: round(acwr, 2),
 	};
 
 	return { monthly, weekly };
+}
+
+function calculateWeeklyLoads(
+	activities: StravaActivity[],
+	weeksCount: number,
+): number[] {
+	const now = new Date();
+	const loads: number[] = [];
+
+	for (let i = 0; i < weeksCount; i++) {
+		const start = getStartOfWeek(
+			new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000),
+		);
+		const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+		const weekActivities = activities.filter((a) => {
+			const date = new Date(a.start_date_local ?? a.start_date);
+			return date >= start && date < end;
+		});
+
+		loads.push(totalDistanceKm(weekActivities));
+	}
+
+	return loads;
 }
 
 export function isSupportedMvpActivity(activity: StravaActivity): boolean {
@@ -122,4 +159,52 @@ function average(values: number[]): number {
 function round(value: number, digits: number): number {
 	const factor = 10 ** digits;
 	return Math.round(value * factor) / factor;
+}
+
+export type TrainingIntent =
+	| "Easy Run"
+	| "Long Run"
+	| "Intervals"
+	| "Tempo/Threshold"
+	| "Recovery"
+	| "Race"
+	| "Unknown";
+
+export function guessTrainingIntent(
+	activity: StravaExtractedActivity,
+): TrainingIntent {
+	const { session, derived } = activity;
+	const distance = session.totalDistanceKm;
+	const time = session.movingTimeSec / 60; // minutes
+
+	// Heuristics for intent
+	if (distance > 10 || time > 100) return "Long Run";
+	if (derived.paceVariability > 15) return "Intervals";
+	if (derived.hrDrift > 10 && distance > 10) return "Tempo/Threshold";
+	if (distance < 5 && session.avgHeartRate < 140) return "Recovery";
+	if (session.avgHeartRate > 160 && distance > 5) return "Race";
+
+	return "Easy Run";
+}
+
+export function getExpectedIntentForDay(date: Date): string {
+	const day = date.getDay();
+	switch (day) {
+		case 0:
+			return "Recovery or Rest";
+		case 1:
+			return "Easy Run";
+		case 2:
+			return "Intervals or Speedwork";
+		case 3:
+			return "Recovery or Easy Run";
+		case 4:
+			return "Tempo or Threshold Run";
+		case 5:
+			return "Easy Run or Rest";
+		case 6:
+			return "Long Run";
+		default:
+			return "Unknown";
+	}
 }

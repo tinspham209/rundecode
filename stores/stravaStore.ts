@@ -9,6 +9,10 @@ import type {
 
 type ActivityAnalysisItem = {
 	analysis: string;
+	intensityScore: number;
+	recoveryHours: number;
+	coachingFlags: string[];
+	trainingIntentMatch: boolean;
 	metadata: Metadata;
 	updatedAt: number;
 };
@@ -34,7 +38,13 @@ type StravaState = {
 	setSyncingActivityId: (value: number | null) => void;
 	setActivityAnalysis: (
 		activityId: number,
-		analysis: string,
+		result: {
+			analysis: string;
+			intensityScore: number;
+			recoveryHours: number;
+			coachingFlags: string[];
+			trainingIntentMatch: boolean;
+		},
 		metadata: Metadata,
 	) => void;
 	setSyncStatus: (
@@ -42,6 +52,12 @@ type StravaState = {
 		status: "idle" | "success" | "error",
 	) => void;
 	updateActivityDescription: (activityId: number, description: string) => void;
+	updateActivityDetails: (
+		activityId: number,
+		name: string,
+		description: string,
+	) => void;
+	resetActivityAnalysis: (activityId: number) => void;
 	setError: (message: string | null) => void;
 	reset: () => void;
 };
@@ -70,12 +86,16 @@ export const useStravaStore = create<StravaState>((set) => ({
 	setFetchingActivities: (fetchingActivities) => set({ fetchingActivities }),
 	setAnalyzingActivityId: (analyzingActivityId) => set({ analyzingActivityId }),
 	setSyncingActivityId: (syncingActivityId) => set({ syncingActivityId }),
-	setActivityAnalysis: (activityId, analysis, metadata) =>
+	setActivityAnalysis: (activityId, result, metadata) =>
 		set((state) => ({
 			activityAnalysisById: {
 				...state.activityAnalysisById,
 				[activityId]: {
-					analysis,
+					analysis: result.analysis,
+					intensityScore: result.intensityScore,
+					recoveryHours: result.recoveryHours,
+					coachingFlags: result.coachingFlags,
+					trainingIntentMatch: result.trainingIntentMatch,
 					metadata,
 					updatedAt: Date.now(),
 				},
@@ -92,7 +112,7 @@ export const useStravaStore = create<StravaState>((set) => ({
 				[activityId]: status,
 			},
 		})),
-	updateActivityDescription: (activityId, description) =>
+	updateActivityDescription: (activityId: number, description: string) =>
 		set((state) => ({
 			activities: state.activities.map((activity) =>
 				activity.id === activityId ? { ...activity, description } : activity,
@@ -102,6 +122,24 @@ export const useStravaStore = create<StravaState>((set) => ({
 					? { ...state.selectedActivity, description }
 					: state.selectedActivity,
 		})),
+	updateActivityDetails: (activityId, name, description) =>
+		set((state) => ({
+			activities: state.activities.map((activity) =>
+				activity.id === activityId
+					? { ...activity, name, description }
+					: activity,
+			),
+			selectedActivity:
+				state.selectedActivity?.id === activityId
+					? { ...state.selectedActivity, name, description }
+					: state.selectedActivity,
+		})),
+	resetActivityAnalysis: (activityId) =>
+		set((state) => {
+			const next = { ...state.activityAnalysisById };
+			delete next[activityId];
+			return { activityAnalysisById: next };
+		}),
 	setError: (error) => set({ error }),
 	reset: () => set(initialState),
 }));

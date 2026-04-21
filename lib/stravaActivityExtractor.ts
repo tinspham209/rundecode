@@ -1,4 +1,5 @@
 import type {
+	AthleteProfile,
 	StravaActivity,
 	StravaExtractedActivity,
 	StravaStreamsByType,
@@ -7,6 +8,7 @@ import type {
 export function extractStravaActivityData(
 	activity: StravaActivity,
 	streams: StravaStreamsByType,
+	profile?: AthleteProfile | null,
 ): StravaExtractedActivity {
 	const distanceKm = activity.distance / 1000;
 	const movingTimeSec = activity.moving_time;
@@ -24,8 +26,44 @@ export function extractStravaActivityData(
 		streams.velocity_smooth,
 	);
 
+	let totalCalories = Math.round(activity.calories ?? 0);
+
+	// Task 2: If calories missing, estimate based on HR, weight, age, time
+	if (totalCalories <= 0 && profile) {
+		const avgHR = Math.round(activity.average_heartrate ?? average(heartRates));
+		if (avgHR > 0 && profile.weightKg && profile.age) {
+			// standard formula for calorie burn based on HR (Male/Female generic approximation)
+			// Male: Calories = [(Age x 0.2017) + (Weight x 0.1988) + (Heart Rate x 0.6309) - 55.0969] x Time / 4.184
+			// Female: Calories = [(Age x 0.074) - (Weight x 0.1263) + (Heart Rate x 0.4472) - 20.4022] x Time / 4.184
+			// Using a blended/simplified version since gender is not explicitly in profile
+			const durationMin = movingTimeSec / 60;
+			const weightLbs = profile.weightKg * 2.20462;
+
+			// Generic formula often used in fitness trackers
+			// Cal/min = (0.6309 * HR + 0.1988 * W + 0.2017 * A - 55.0969) / 4.184
+			const estimated =
+				((0.6309 * avgHR +
+					0.1988 * weightLbs +
+					0.2017 * profile.age -
+					55.0969) /
+					4.184) *
+				durationMin;
+
+			if (estimated > 0) {
+				totalCalories = Math.round(estimated);
+			}
+		} else if (profile.weightKg) {
+			// Fallback: simple MET based estimation if HR missing
+			// Running ~8-10 METs
+			const met = 8.5;
+			const estimated = met * profile.weightKg * (movingTimeSec / 3600);
+			totalCalories = Math.round(estimated);
+		}
+	}
+
 	return {
 		session: {
+			activityId: activity.id,
 			totalDistanceKm: round(distanceKm, 2),
 			movingTimeSec,
 			elapsedTimeSec,
@@ -39,11 +77,17 @@ export function extractStravaActivityData(
 				(activity.average_cadence ?? average(streams.cadence)) * 2,
 			),
 			avgPacePerKm: toPace(distanceKm, movingTimeSec),
-			totalCalories: Math.round(activity.calories ?? 0),
+			totalCalories,
 			totalAscent: Math.round(activity.total_elevation_gain ?? 0),
 			startTime: activity.start_date_local ?? activity.start_date,
 			activityName: activity.name,
+			device_name: activity.device_name,
+			average_speed: activity.average_speed,
+			max_speed: activity.max_speed,
+			elev_high: activity.elev_high,
+			elev_low: activity.elev_low,
 		},
+
 		laps: [],
 		derived: {
 			hrDrift: round(hrDrift, 2),

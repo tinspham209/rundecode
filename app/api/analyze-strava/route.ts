@@ -81,7 +81,12 @@ export async function POST(request: Request) {
 
 		return NextResponse.json({
 			analysis: analysisResponse.analysis,
+			intensityScore: analysisResponse.intensityScore,
+			recoveryHours: analysisResponse.recoveryHours,
+			coachingFlags: analysisResponse.coachingFlags,
+			trainingIntentMatch: analysisResponse.trainingIntentMatch,
 			metadata: {
+				activityId: activity.session.activityId,
 				distance: activity.session.totalDistanceKm,
 				pace: toPace(
 					activity.session.totalDistanceKm,

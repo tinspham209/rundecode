@@ -45,7 +45,7 @@ describe("ActivityCard", () => {
 	it("renders existing Strava activity description", () => {
 		render(<ActivityCard activity={sampleActivity} onAnalyze={vi.fn()} />);
 
-		expect(screen.getByText(/mô tả hiện tại trên strava/i)).toBeInTheDocument();
+		expect(screen.getByText(/current strava description/i)).toBeInTheDocument();
 		expect(screen.getByText("Strava description hiện tại")).toBeInTheDocument();
 	});
 
@@ -63,14 +63,14 @@ describe("ActivityCard", () => {
 			/>,
 		);
 
-		expect(screen.getByText(/kết quả phân tích/i)).toBeInTheDocument();
+		expect(screen.getByText(/analysis result/i)).toBeInTheDocument();
 		expect(
 			screen.getByDisplayValue("analysis content from BE"),
 		).toBeInTheDocument();
 
 		await user.click(
 			screen.getByRole("button", {
-				name: /sync analysis lên strava description/i,
+				name: /sync to strava description/i,
 			}),
 		);
 
@@ -89,6 +89,6 @@ describe("ActivityCard", () => {
 			/>,
 		);
 
-		expect(screen.getByText(/đã sync mô tả thành công/i)).toBeInTheDocument();
+		expect(screen.getByText(/sync successful\./i)).toBeInTheDocument();
 	});
 });

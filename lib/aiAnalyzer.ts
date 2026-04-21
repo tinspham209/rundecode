@@ -3,13 +3,13 @@ import { RUN_ANALYSIS_SYSTEM_PROMPT } from "../src/prompts/runAnalysisSystemProm
 
 // List of free models to try in order
 export const FREE_MODELS = [
+	"openrouter/free",
 	"openai/gpt-oss-120b:free",
 	"openai/gpt-oss-20b:free",
 	"google/gemma-4-31b-it:free",
 	"meta-llama/llama-3.3-70b-instruct:free",
 	"google/gemma-4-26b-a4b-it:free",
 	"google/gemma-3-27b-it:free",
-	"openrouter/free",
 	"qwen/qwen3-next-80b-a3b-instruct:free",
 	"z-ai/glm-4.5-air:free",
 	"minimax/minimax-m2.5:free",
@@ -20,6 +20,10 @@ const DEFAULT_MODEL = FREE_MODELS[0];
 
 export type AnalysisResponse = {
 	analysis: string;
+	intensityScore: number;
+	recoveryHours: number;
+	coachingFlags: string[];
+	trainingIntentMatch: boolean;
 	tokensUsed?: number;
 	model: string;
 };
@@ -115,11 +119,47 @@ function toAnalysisResponse(
 		throw new Error("No content in OpenRouter response");
 	}
 
-	return {
-		analysis: content,
-		model,
-		tokensUsed: totalTokens,
-	};
+	try {
+		// Clean up potential markdown blocks if the model ignored instructions
+		let jsonStr = content.trim();
+
+		// Handle cases where AI might add text before or after the JSON block
+		const firstBrace = jsonStr.indexOf("{");
+		const lastBrace = jsonStr.lastIndexOf("}");
+
+		if (firstBrace !== -1 && lastBrace !== -1) {
+			jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
+		}
+
+		// Remove markdown code block markers
+		jsonStr = jsonStr.replace(/^```json\s*|\s*```$/g, "").trim();
+
+		const parsed = JSON.parse(jsonStr);
+
+		return {
+			analysis: parsed.analysisText || content,
+			intensityScore: parsed.intensityScore || 0,
+			recoveryHours: parsed.recoveryHours || 0,
+			coachingFlags: parsed.coachingFlags || [],
+			trainingIntentMatch: typeof parsed.trainingIntentMatch === "boolean"
+				? parsed.trainingIntentMatch
+				: !!parsed.trainingIntentMatch,
+			model,
+			tokensUsed: totalTokens,
+		};
+	} catch (e) {
+		console.error("Failed to parse AI response as JSON:", e, "Content was:", content);
+		// Fallback for legacy or non-conforming responses
+		return {
+			analysis: content,
+			intensityScore: 0,
+			recoveryHours: 0,
+			coachingFlags: [],
+			trainingIntentMatch: false,
+			model,
+			tokensUsed: totalTokens,
+		};
+	}
 }
 
 function isRateLimitError(error: unknown): boolean {

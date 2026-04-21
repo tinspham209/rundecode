@@ -251,7 +251,7 @@ describe("Strava helper logic", () => {
 
 	it("buildRunAnalysisSystemPrompt keeps fallback defaults when profile is absent", () => {
 		const prompt = buildRunAnalysisSystemPrompt(null);
-		expect(prompt).toMatch(/Name: Tin/);
-		expect(prompt).toMatch(/Convert using weight 75 kg/);
+		expect(prompt).toMatch(/Name: Runner/);
+		expect(prompt).toMatch(/Weight: 75 kg/);
 	});
 });

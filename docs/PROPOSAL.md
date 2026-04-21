@@ -1,6 +1,6 @@
 # Product Proposal
 
-**Status:** Current proposal aligned to the implemented app as of 2026-04-08
+**Status:** Current proposal aligned to the implemented app as of 2026-04-22
 
 This document consolidates the previous FIT-only proposal and the Strava integration proposal into one up-to-date product direction.
 
@@ -23,10 +23,10 @@ The app now supports two complementary entry paths:
 
 - Strava authentication
 - recent supported activity list
-- per-activity AI analysis
+- per-activity AI analysis with structured metrics (Intensity, Recovery, Flags)
 - sync generated analysis back to Strava description
 - manual `.fit` upload + parse preview + analysis
-- editable plain-text output
+- editable plain-text output with metadata context
 - mobile-first UX
 
 ### Supported Strava activity types
@@ -86,7 +86,8 @@ This split keeps the homepage focused while preserving the verification-first FI
 
 ### Output strategy
 
-- Vietnamese plain text only
+- Structured JSON internal response, rendered as Vietnamese plain text
+- Includes derived metrics: Intensity Score (1-10), Recovery Hours, Coaching Flags
 - optimized for Strava description usage
 - attribution preserved through prompt rules
 - editable by user before reuse
@@ -117,7 +118,9 @@ Use:
 - athlete stats
 - recent monthly/weekly context
 - selected activity summary
-- selected activity streams-derived metrics
+- selected activity streams-derived metrics (HR Drift, Pace/Cadence Variability)
+- Training Intent (Expected vs Guessed)
+- Calorie estimation (when missing from source)
 
 ### Privacy boundary
 
